@@ -9,8 +9,10 @@ Pipes are configured in a pipeline schematic:
         Schematic schematic = new Schematic(LogStringPipe.class);
         Schematic.PipeRep logString1 = schematic.getRoot();
         Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
-        
-logString1 -> logString2
+
+This looks like this:
+
+    logString1 -> logString2
 
 Additionally, pipes can be wrapped by other special wrappable pipes.
 
@@ -28,10 +30,11 @@ Pipes can have multiple children:
         Schematic.PipeRep logString1 = schematic.getRoot();
         Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
         Schematic.PipeRep logString3 = logString1.addChild(LogStringPipe.class);
-        
-loadBalancingPipeWrapper[logString1] -> logString2
 
-                                   |--> logString3
+This looks like this:
+
+    loadBalancingPipeWrapper[logString1] -> logString2
+                                        \-> logString3
 
 Pipes can also have multiple parents:
 
@@ -42,9 +45,10 @@ Pipes can also have multiple parents:
         Schematic.PipeRep logString4 = logString2.addChild(LogStringPipe.class);
         logString4.addParent(logString3).
   
-loadBalancingPipeWrapper[logString1] -> logString2 -> logString4
+This looks like this:
 
-                                   |--> logString3 -> |
+    loadBalancingPipeWrapper[logString1] -> logString2 -> logString4
+                                        \-> logString3 ->/
           
 Infinite loops are not supported, though. They don't build properly.
 

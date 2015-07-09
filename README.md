@@ -30,6 +30,7 @@ Pipes can have multiple children:
         Schematic.PipeRep logString3 = logString1.addChild(LogStringPipe.class);
         
 loadBalancingPipeWrapper[logString1] -> logString2
+
                                    |--> logString3
 
 Pipes can also have multiple parents:
@@ -42,6 +43,7 @@ Pipes can also have multiple parents:
         logString4.addParent(logString3).
   
 loadBalancingPipeWrapper[logString1] -> logString2 -> logString4
+
                                    |--> logString3 -> |
           
 Infinite loops are not supported, though. They don't build properly.

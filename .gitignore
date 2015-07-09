@@ -1,0 +1,24 @@
+#OS Files
+.DS_Store
+
+#Build Directories
+/build
+/bin
+/out
+/target
+
+#Native Libraries
+*.dylib
+*.dll
+
+#IDE Specific Files
+*.iml
+/.idea
+.project
+.cache-main
+.classpath
+.settings
+
+#Git Stuff
+/.git
+

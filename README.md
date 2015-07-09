@@ -20,7 +20,9 @@ Additionally, pipes can be wrapped by other special wrappable pipes.
         Schematic.PipeRep logString1 = schematic.getRoot();
         Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
 
-loadBalancingPipeWrapper[logString1] -> logString2
+This looks like this:
+
+    loadBalancingPipeWrapper[logString1] -> logString2
         
 This particular wrapper acts as a load balancer with several logStringPipes inside.
 

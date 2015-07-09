@@ -64,7 +64,7 @@ This gives you a pipe opening into which you can put things.
 
         opening.put("Hello, world.");
       
-The pipe builder can also build an 'ended pipe. This way, after your pipe is finished processing an object, it sends along the final pipe's output to the akka actor that you've specified. 
+The pipe builder can also build an 'ended' pipe. This way, after your pipe is finished processing an object, it sends along the final pipe's output to the akka actor that you've specified. 
 
         ActorRef myRef = getActorRef();
         PipeBuilder pipeBuilder = new PipeBuilder(PipeSystem.GetSystem());

@@ -1,7 +1,7 @@
 # AkkaPipes
 A simple concurrency pipeline framework using akka actors.
 
-#How it works
+##How it works
 Welcome to akka pipes! This framework uses akka actors to create a concurrent pipeline. Each pipe can operate on an object independently of the others.
 
 Pipes are configured in a pipeline schematic:
@@ -70,16 +70,21 @@ The pipe builder can also build an 'ended pipe. This way, after your pipe is fin
         PipeBuilder pipeBuilder = new PipeBuilder(PipeSystem.GetSystem());
         PipeOpening opening = pipeBuilder.build(schematic, myRef);
         
-#Pipe Types
+##Pipe Types
 
 There are a few types of pipes.
+
 1. Pipe: this is a simple pipe. It takes in an object of one type and spits out an object of another type.
+
 2. MultiPipe: this pipe spits out several objects for every one put in. 
+
 3. FilterPipe: this pipe decides whether or not an inputted object will pass through onto the next pipe.
+
 4. SideEffectPipe: this pipe passes through the same object, unchanged. The LogStringPipe is one of these.
+
 5. WrapperPipe: this pipe wraps one of the above types of pipes. It changes how the pipes receive messages. 
 
-#Subclassing Pipes
+##Subclassing Pipes
 
 Creating pipes is easy. Here's the source for that infamous LogStringPipe:
 
@@ -97,7 +102,10 @@ Creating pipes is easy. Here's the source for that infamous LogStringPipe:
 That constructor needs to be there to set the downstream pipes.
 The only other thing to do is to override the ingest method. 
 
-## todo
+### todo
+
 Add Unit testing
+
 Do it with scala conventions
+
 Configure for infinitely wrappable wrappables.

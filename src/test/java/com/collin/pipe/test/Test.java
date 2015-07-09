@@ -10,5 +10,6 @@ public class Test {
         Schematic ps = new Schematic(LogStringPipe.class);
         ps.getRoot().addChild(LogStringPipe.class, LoadBalancingPipeWrapper.class)
                 .addChild(ByteArrayToStringPipe.class);
+
     }
 }

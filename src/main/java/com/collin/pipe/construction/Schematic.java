@@ -2,6 +2,7 @@ package com.collin.pipe.construction;
 
 import akka.actor.ActorRef;
 import com.collin.pipe.stereotype.FilterPipe;
+import com.collin.pipe.stereotype.Pipe;
 import com.collin.pipe.stereotype.SideEffectPipe;
 import com.sun.corba.se.impl.io.TypeMismatchException;
 
@@ -30,15 +31,6 @@ public final class Schematic {
     }
 
     /**
-     * Creates a new schematic with a first pipe and a pipe wrapper.
-     * @param clazz The class of the first pipe.
-     * @param wrapperClass The type of wrapper for the first pipe.
-     */
-    public Schematic(Class clazz, Class wrapperClass) {
-        root = new PipeRep(clazz, wrapperClass);
-    }
-
-    /**
      * Gets the root (the first pipe representation) of this schematic.
      * @return the root of the schematic.
      */
@@ -51,15 +43,7 @@ public final class Schematic {
      * It has a class and children associated with it. Optionally, it has a wrapper class and a list of parents.
      * Also, the pipe will have an actor reference to reference the actual pipe after it has been built.
      */
-    public class PipeRep {
-        /**
-         * The type of class to wrap the pipe. Optional.
-         */
-        private Class wrapperClazz = null;
-        /**
-         * The type of class that this pipe is.
-         */
-        private Class clazz;
+    public class PipeRep extends AbstractRep {
         /**
          * The pipe's parents. It may have more than one.
          * Each parent's output type must equal this pipe's input type.
@@ -74,35 +58,13 @@ public final class Schematic {
          * An actor reference for the pipe, once it has been built.
          */
         private ActorRef self = null;
-
         /**
          * If the class is not of type 'PipeRep' an error will be thrown.
          * Creates a new pipe representation.
          * @param clazz The class of pipe to represent.
          */
         public PipeRep(Class clazz){
-            new PipeRep(clazz, null, null);
-        }
-
-        /**
-         * Creates a new pipe representation.
-         * If the class is not of type 'PipeRep' an error will be thrown.
-         * If the parent's out type doesn't match the pipe's in type, an error will be thrown.
-         * @param clazz The class of pipe to represent.
-         * @param parent the parent of the pipe.
-         */
-        public PipeRep(Class clazz, PipeRep parent) throws TypeMismatchException {
-            new PipeRep(clazz, null, parent);
-        }
-
-        /**
-         * Creates a new pipe representation.
-         * If the class is not of type 'PipeRep' an error will be thrown.
-         * @param clazz The class of the pipe to represent.
-         * @param wrapperClazz The wrapper of the pipe.
-         */
-        public PipeRep(Class clazz, Class wrapperClazz) {
-            new PipeRep(clazz, wrapperClazz, null);
+            this(clazz, null);
         }
 
         /**
@@ -110,21 +72,13 @@ public final class Schematic {
          * If the class is not of type 'PipeRep' an error will be thrown.
          * If the parent's out type doesn't match the pipe's or it's wrapper's in type, an error will be thrown.
          * @param clazz The class of the pipe to represent.
-         * @param wrapperClazz The wrapper of the pipe.
          * @param parent The parent of the pipe.
          */
-        public PipeRep(Class clazz, Class wrapperClazz, PipeRep parent) throws TypeMismatchException {
+        public PipeRep(Class clazz, PipeRep parent) throws TypeMismatchException {
             if (com.collin.pipe.stereotype.Pipe.class.isAssignableFrom(clazz)) {
                 this.clazz = clazz;
             } else {
                 throw new TypeMismatchException();
-            }
-            if (wrapperClazz != null) {
-                if (com.collin.pipe.stereotype.WrapperPipe.class.isAssignableFrom(wrapperClazz)) {
-                    this.wrapperClazz = wrapperClazz;
-                } else {
-                    throw new TypeMismatchException();
-                }
             }
             if (parent != null) {
                 this.parents.add(parent);
@@ -138,21 +92,16 @@ public final class Schematic {
          * @return The representation of the pipe's child.
          */
         public PipeRep addChild(Class clazz) throws TypeMismatchException {
-            return addChild(clazz, null);
+            PipeRep child = new PipeRep(clazz, this);
+            checkClassCompatibility(this, child);
+            this.children.add(child);
+            return child;
         }
 
-        /**
-         * Adds a child to the pipe's children.
-         * If the parent's 'out' type doesn't match the pipe's or it's wrapper's 'in' type, an error will be thrown.
-         * @param clazz The class of the child to be added.
-         * @param wrapperClazz The wrapper of the new child.
-         * @return The representation of the pipe's child.
-         */
-        public PipeRep addChild(Class clazz, Class wrapperClazz) throws TypeMismatchException {
-            checkClassCompatibility(getClazz(), clazz, wrapperClazz);
-            PipeRep n = new PipeRep(clazz, wrapperClazz, this);
-            this.children.add(n);
-            return n;
+        public PipeRep addChild(PipeRep child) throws TypeMismatchException {
+            checkClassCompatibility(this, child);
+            this.children.add(child);
+            return child;
         }
 
         /**
@@ -176,14 +125,6 @@ public final class Schematic {
             List<ActorRef> refs = new ArrayList<>();
             getChildren().forEach(child -> refs.add(child.getActorRef()));
             return refs;
-        }
-
-        /**
-         * Returns this pipe's class.
-         * @return This pipe's class.
-         */
-        public Class getClazz() {
-            return this.clazz;
         }
 
         /**
@@ -224,21 +165,14 @@ public final class Schematic {
          * @param parent The parent to be added.
          */
         public void addParent(PipeRep parent) {
-            checkClassCompatibility(parent.getClazz(), this.clazz, this.wrapperClazz);
+            checkInfiniteLoop(parent);
             this.parents.add(parent);
+            parent.addChild(this);
         }
 
-        /**
-         * Get's this pipe representation's wrapper class.
-         * @return The pipe's wrapper class.
-         */
-        public Class getWrapperClazz() { return this.wrapperClazz; }
-
-        /**
-         * Returns whether or not the pipe has a wrapper.
-         * @return True if the pipe has a wrapper, false otherwise.
-         */
-        public Boolean hasWrapper() { return this.wrapperClazz != null; }
+        private void checkInfiniteLoop(PipeRep parent) {
+            throw new UnsupportedOperationException();
+        }
 
         /**
          * Sets the pipe representation's ActorRef.
@@ -269,33 +203,73 @@ public final class Schematic {
          * Compatibility is defined if a parent's 'out' type equals a child's 'in' type.
          * @param parent The parent to be checked
          * @param child The child to be checked.
-         * @param wrapper The wrapper of the child to be checked.
          */
-        private void checkClassCompatibility(Class parent, Class child, Class wrapper) throws TypeMismatchException {
-            if (parent != null) {
-                Class genericOutParameter;
-                if (FilterPipe.class.isAssignableFrom(parent) || SideEffectPipe.class.isAssignableFrom(parent)){
-                    genericOutParameter = (Class) ((ParameterizedType) parent.getGenericSuperclass())
-                            .getActualTypeArguments()[0];
-                } else {
-                    genericOutParameter = (Class) ((ParameterizedType) parent.getGenericSuperclass())
-                            .getActualTypeArguments()[1];
-                }
-                if (child != null) {
-                    Class genericClassInParameter = (Class) ((ParameterizedType) child.getGenericSuperclass())
-                            .getActualTypeArguments()[0];
-                    if (genericClassInParameter != genericOutParameter) {
-                        throw new TypeMismatchException();
-                    }
-                }
-                if (wrapper != null) {
-                    Class genericWrapperInParameter = (Class) ((ParameterizedType) wrapper.getGenericSuperclass())
-                            .getActualTypeArguments()[0];
-                    if (genericWrapperInParameter != genericOutParameter) {
-                        throw new TypeMismatchException();
-                    }
+        private void checkClassCompatibility(PipeRep parent, PipeRep child) throws TypeMismatchException {
+            if (parent != null && child != null) {
+                if(child.getInType() != parent.getOutType()) {
+                    throw new TypeMismatchException();
                 }
             }
+        }
+
+        private Class getInType() {
+            return (Class) ((ParameterizedType) this.clazz.getGenericSuperclass())
+                    .getActualTypeArguments()[0];
+        }
+        private Class getOutType() {
+            Class genericOutParameter;
+            if (FilterPipe.class.isAssignableFrom(this.clazz) || SideEffectPipe.class.isAssignableFrom(this.clazz)){
+                genericOutParameter = (Class) ((ParameterizedType) this.clazz.getGenericSuperclass())
+                        .getActualTypeArguments()[0];
+            } else {
+                genericOutParameter = (Class) ((ParameterizedType) this.clazz.getGenericSuperclass())
+                        .getActualTypeArguments()[1];
+            }
+            return genericOutParameter;
+        }
+
+    }
+    public class WrapRep extends AbstractRep {
+        private AbstractRep innerPipe;
+        public WrapRep(AbstractRep inner, Class clazz) {
+            this.innerPipe = inner;
+            this.clazz = clazz;
+        }
+    }
+    private abstract class AbstractRep {
+        /**
+         * The type of class that this pipe is.
+         */
+        protected Class clazz = null;
+
+        protected WrapRep wrapper = null;
+
+        /**
+         * Returns this pipe's class.
+         * @return This pipe's class.
+         */
+        public Class getClazz() {
+            return this.clazz;
+        }
+
+        public WrapRep wrap(Class clazz) {
+            this.wrapper = new WrapRep(this, clazz);
+            return this.wrapper;
+        }
+        public boolean hasWrapper() {
+            return this.wrapper != null;
+        }
+        public WrapRep getWrapper() {
+            return this.wrapper;
+        }
+        public List<Class> getWrappers() {
+            WrapRep wrapper = this.getWrapper();
+            List<Class> wrappers = new ArrayList<>();
+            while(wrapper != null) {
+                wrappers.add(wrapper.getClazz());
+                wrapper = wrapper.getWrapper();
+            }
+            return wrappers;
         }
     }
 }

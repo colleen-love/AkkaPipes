@@ -23,11 +23,11 @@ public class LoadBalancingPipeWrapper<I, O> extends WrapperPipe<I, O> {
 
     /**
      * Creates a new instance of the pipe wrapper.
-     * @param pipe The type of pipe that this class will wrap.
+     * @param inner The type of pipe that this class will wrap.
      * @param downstreamPipes The pipes to which the resultant object should be routed.
      */
-    public LoadBalancingPipeWrapper(Class pipe, List<ActorRef> downstreamPipes){
-        super(pipe, downstreamPipes);
+    public LoadBalancingPipeWrapper(List<Class> inner, List<ActorRef> downstreamPipes){
+        super(inner, downstreamPipes);
         initSystem(this.routingLogic, this.numberOfRoutees);
     }
 
@@ -38,13 +38,13 @@ public class LoadBalancingPipeWrapper<I, O> extends WrapperPipe<I, O> {
      */
     @SuppressWarnings("unchecked")
     private void initSystem(Class routingLogic, Integer numberOfRoutees) {
+        List<Routee> routees = new ArrayList<>();
+        for (int i = 0; i < numberOfRoutees; i++) {
+            ActorRef r = buildInnerPipe();
+            getContext().watch(r);
+            routees.add(new ActorRefRoutee(r));
+        }
         try {
-            List<Routee> routees = new ArrayList<>();
-            for (int i = 0; i < numberOfRoutees; i++) {
-                ActorRef r = getContext().actorOf(Props.create(this.innerPipe, this.downstreamPipes));
-                getContext().watch(r);
-                routees.add(new ActorRefRoutee(r));
-            }
             router = new Router((RoutingLogic) routingLogic.getConstructor().newInstance(), routees);
         } catch (InstantiationException e) {
             e.printStackTrace();
@@ -55,6 +55,7 @@ public class LoadBalancingPipeWrapper<I, O> extends WrapperPipe<I, O> {
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
+
     }
 
     /**

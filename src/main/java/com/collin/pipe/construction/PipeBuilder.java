@@ -4,6 +4,7 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,7 +90,11 @@ public final class PipeBuilder {
     private ActorRef buildPipe(Schematic.PipeRep pipe, List<ActorRef> downstream) {
         ActorRef child;
         if (pipe.hasWrapper()){
-            child = system.actorOf(Props.create(pipe.getWrapperClazz(), pipe.getClazz(), downstream ));
+            List<Class> wrappers = pipe.getWrappers();
+            Class outermost = wrappers.get(wrappers.size() - 1);
+            wrappers.remove(wrappers.size() - 1);
+            wrappers.add(0, pipe.getClazz());
+            child = system.actorOf(Props.create(outermost, wrappers, downstream ));
         } else {
             child = system.actorOf(Props.create(pipe.getClazz(), downstream));
         }

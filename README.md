@@ -6,65 +6,68 @@ Welcome to akka pipes! This framework uses akka actors to create a concurrent pi
 
 Pipes are configured in a pipeline schematic:
 
-        Schematic schematic = new Schematic(LogStringPipe.class);
-        Schematic.PipeRep logString1 = schematic.getRoot();
-        Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
+    Schematic schematic = new Schematic(LogStringPipe.class);
+    Schematic.PipeRep logString1 = schematic.getRoot();
+    Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
 
-This looks like this:
+`
 
     logString1 -> logString2
 
 Additionally, pipes can be wrapped by other special wrappable pipes.
 
-        Schematic schematic = new Schematic(LogStringPipe.class, LoadBalancingPipeWrapper.class);
-        Schematic.PipeRep logString1 = schematic.getRoot();
-        Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
+    Schematic schematic = new Schematic(LogStringPipe.class);
+    Schematic.PipeRep logString1 = schematic.getRoot();
+    Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
+    logString2.wrap(LoadBalancingPipeWrapper.class);
 
-This looks like this:
+`
 
-    loadBalancingPipeWrapper[logString1] -> logString2
+    logString1 -> wrapper[logString2]
         
 This particular wrapper acts as a load balancer with several logStringPipes inside.
 
 Pipes can have multiple children:
 
-        Schematic schematic = new Schematic(LogStringPipe.class, LoadBalancingPipeWrapper.class);
-        Schematic.PipeRep logString1 = schematic.getRoot();
-        Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
-        Schematic.PipeRep logString3 = logString1.addChild(LogStringPipe.class);
+    Schematic schematic = new Schematic(LogStringPipe.class);
+    Schematic.PipeRep logString1 = schematic.getRoot();
+    Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
+    logString2.wrap(LoadBalancingPipeWrapper.class);
+    Schematic.PipeRep logString3 = logString1.addChild(LogStringPipe.class);
 
-This looks like this:
+`
 
-    loadBalancingPipeWrapper[logString1] -> logString2
-                                        \-> logString3
+    logString1 -> wrapper[logString2]
+              \-> logString3 
 
 Pipes can also have multiple parents:
 
-        Schematic schematic = new Schematic(LogStringPipe.class, LoadBalancingPipeWrapper.class);
-        Schematic.PipeRep logString1 = schematic.getRoot();
-        Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
-        Schematic.PipeRep logString3 = logString1.addChild(LogStringPipe.class);
-        Schematic.PipeRep logString4 = logString2.addChild(LogStringPipe.class);
-        logString4.addParent(logString3).
+    Schematic schematic = new Schematic(LogStringPipe.class);
+    Schematic.PipeRep logString1 = schematic.getRoot();
+    Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
+    logString2.wrap(LoadBalancingPipeWrapper.class);
+    Schematic.PipeRep logString3 = logString1.addChild(LogStringPipe.class);
+    Schematic.PipeRep logString4 = logString2.addChild(LogStringPipe.class);
+    logString4.addParent(logString3);
   
-This looks like this:
+`
 
-    loadBalancingPipeWrapper[logString1] -> logString2 -> logString4
-                                        \-> logString3 ->/
-          
-Infinite loops are not supported, though. They don't build properly.
+    logString1 -> wrapper[logString2] -> logString4
+              \-> ------- logString3 -->/
+
+Infinite loops are not supported; the schematic will throw an error at runtime.
 
 Speaking of building; in order to construct a pipeline, pass the schematic into a PipeBuilder.
 The pipe builder will need an akka actor system in order to be constructed.
 
-        PipeBuilder pipeBuilder = new PipeBuilder(PipeSystem.GetSystem());
-        PipeOpening opening = pipeBuilder.build(schematic);
+        PipeBuilder builder = new PipeBuilder(PipeSystem.GetSystem());
+        PipeOpening<String> opening = builder.build(schematic);
         
-This gives you a pipe opening into which you can put things.
+This gives you a pipe opening into which you can put things. There's no way for the compiler to catch an error if you declare your PipeOpening of the wrong type, make sure it matches your first pipe's input.
 
         opening.put("Hello, world.");
       
-The pipe builder can also build an 'ended' pipe. This way, after your pipe is finished processing an object, it sends along the final pipe's output to the akka actor that you've specified. 
+The pipe builder can also build an 'ended' pipe. This way, after your final pipes are finished processing an object, they sends along the output to the akka actor that you've specified. 
 
         ActorRef myRef = getActorRef();
         PipeBuilder pipeBuilder = new PipeBuilder(PipeSystem.GetSystem());

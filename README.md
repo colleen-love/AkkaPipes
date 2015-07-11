@@ -58,8 +58,8 @@ Pipes can also have multiple parents:
     Schematic.Wrapper wrapper = uppercase.wrap(LoadBalancingPipeWrapper.class);
     Schematic.Pipe lowercase = logString1.addChild(LowercasePipe.class);
     Schematic.Pipe logString2 = uppercase.addChild(LogStringPipe.class);
-    logString2.addParent(lowercase);
-  
+    lowercase.addChild(logString2);
+    
 `
 
     logString1 -> wrapper[uppercase] -> logString2

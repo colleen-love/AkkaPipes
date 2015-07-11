@@ -1,71 +1,89 @@
 # AkkaPipes
-A simple concurrency pipeline framework using akka actors.
+AkkaPipes is a framework for creating concurrent pipelines. It allows you to quickly and easily build scalable data processing flows.
+
 
 ##How it works
-Welcome to akka pipes! This framework uses akka actors to create a concurrent pipeline. Each pipe can operate on an object independently of the others.
+Pipes are very easy to make. They have two types: I and O. They also have one public method to impliment, 'ingest'. Ingest takes a single argument of type I and returns type O. Here's a simple pipe example.
 
-Pipes are configured in a pipeline schematic:
+    public class UppercasePipe extends Pipe<String, String> {
+        @Override
+        public String ingest(String s) {
+            return s.toUpperCase();
+        }
+    }
+    
+After creating a series of pipes for data processing, they are configured in a schematic:
 
     Schematic schematic = new Schematic(LogStringPipe.class);
-    Schematic.PipeRep logString1 = schematic.getRoot();
-    Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
+    Schematic.Pipe logString1 = schematic.getRoot();
+    Schematic.Pipe uppercase = logString1.addChild(UppercasePipe.class);
 
 `
 
-    logString1 -> logString2
+    logString1 -> uppercase
 
 Additionally, pipes can be wrapped by other special wrappable pipes.
 
     Schematic schematic = new Schematic(LogStringPipe.class);
-    Schematic.PipeRep logString1 = schematic.getRoot();
-    Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
-    logString2.wrap(LoadBalancingPipeWrapper.class);
+    Schematic.Pipe logString1 = schematic.getRoot();
+    Schematic.Pipe uppercase = logString1.addChild(UppercasePipe.class);
+    Schematic.Wrapper wrapper = uppercase.wrap(LoadBalancingPipeWrapper.class);
 
 `
 
-    logString1 -> wrapper[logString2]
+    logString1 -> wrapper[uppercase]
         
-This particular wrapper acts as a load balancer with several logStringPipes inside.
+Wrappers can also be wrapped. This particular wrapper acts as a load balancer with several uppercase pipes inside.
 
 Pipes can have multiple children:
 
     Schematic schematic = new Schematic(LogStringPipe.class);
-    Schematic.PipeRep logString1 = schematic.getRoot();
-    Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
-    logString2.wrap(LoadBalancingPipeWrapper.class);
-    Schematic.PipeRep logString3 = logString1.addChild(LogStringPipe.class);
+    Schematic.Pipe logString1 = schematic.getRoot();
+    Schematic.Pipe uppercase = logString1.addChild(UppercasePipe.class);
+    Schematic.Wrapper wrapper = uppercase.wrap(LoadBalancingPipeWrapper.class);
+    Schematic.Pipe lowercase = logString1.addChild(LowercasePipe.class);
 
 `
 
-    logString1 -> wrapper[logString2]
-              \-> logString3 
+    logString1 -> wrapper[uppercase]
+              \-> lowercase 
+
+Don't send mutable data through multiple children, though. This can create race conditions, hard to find bugs, and inconsistent results.
 
 Pipes can also have multiple parents:
 
     Schematic schematic = new Schematic(LogStringPipe.class);
-    Schematic.PipeRep logString1 = schematic.getRoot();
-    Schematic.PipeRep logString2 = logString1.addChild(LogStringPipe.class);
-    logString2.wrap(LoadBalancingPipeWrapper.class);
-    Schematic.PipeRep logString3 = logString1.addChild(LogStringPipe.class);
-    Schematic.PipeRep logString4 = logString2.addChild(LogStringPipe.class);
-    logString4.addParent(logString3);
+    Schematic.Pipe logString1 = schematic.getRoot();
+    Schematic.Pipe uppercase = logString1.addChild(UppercasePipe.class);
+    Schematic.Wrapper wrapper = uppercase.wrap(LoadBalancingPipeWrapper.class);
+    Schematic.Pipe lowercase = logString1.addChild(LowercasePipe.class);
+    Schematic.Pipe logString2 = uppercase.addChild(LogStringPipe.class);
+    logString2.addParent(lowercase);
   
 `
 
-    logString1 -> wrapper[logString2] -> logString4
-              \-> ------- logString3 -->/
+    logString1 -> wrapper[uppercase] -> logString2
+              \-> ------- lowercase -->/
 
-Infinite loops are not supported; the schematic will throw an error at runtime.
+Infinite loops are supported in order to enable recursion.
 
-Speaking of building; in order to construct a pipeline, pass the schematic into a PipeBuilder.
-The pipe builder will need an akka actor system in order to be constructed.
+In order to build the pipeline, pass the schematic into a PipeBuilder.
+The pipe builder will need an akka actor system in order to be constructed. There's a default one in the PipeSystem class.
 
         PipeBuilder builder = new PipeBuilder(PipeSystem.GetSystem());
         PipeOpening<String> opening = builder.build(schematic);
         
 This gives you a pipe opening into which you can put things. There's no way for the compiler to catch an error if you declare your PipeOpening of the wrong type, make sure it matches your first pipe's input.
 
+In order to use the pipeline, put something into the opening.
+
         opening.put("Hello, world.");
+        
+This has the following output:
+
+    Hello, world.
+    HELLO, WORLD.
+    hello, world.
       
 The pipe builder can also build an 'ended' pipe. This way, after your final pipes are finished processing an object, they sends along the output to the akka actor that you've specified. 
 
@@ -87,28 +105,11 @@ There are a few types of pipes.
 
 5. WrapperPipe: this pipe wraps one of the above types of pipes. It changes how the pipes receive messages. 
 
-##Subclassing Pipes
+##A note about WrapperPipes
 
-Creating pipes is easy. Here's the source for that infamous LogStringPipe:
+These pipes need to be transparent in order to function correctly. When passing data to their inner pipes, they should send messages as their sender. Construction of their inner pipes has also been simplified with the protected class, 'buildInnerPipe().
 
-        public class LogStringPipe extends SideEffectPipe<String> {
-            public LogStringPipe(List<ActorRef> downstreamPipes) {
-                super(downstreamPipes);
-            }
-            @Override
-            public String ingest(String s) {
-                System.out.println(s);
-                return s;
-            }
-        }
-
-That constructor needs to be there to set the downstream pipes.
-The only other thing to do is to override the ingest method. 
 
 ### todo
 
 Add Unit testing
-
-Do it with scala conventions
-
-Configure for infinitely wrappable wrappables.

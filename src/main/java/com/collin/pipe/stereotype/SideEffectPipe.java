@@ -1,9 +1,5 @@
 package com.collin.pipe.stereotype;
 
-import akka.actor.ActorRef;
-
-import java.util.List;
-
 /**
  * This pipe takes in an object of type T and sends it back out unchanged.
  * Side effects occur, however without impacting the object itself.

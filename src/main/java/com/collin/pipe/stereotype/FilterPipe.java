@@ -1,9 +1,5 @@
 package com.collin.pipe.stereotype;
 
-import akka.actor.ActorRef;
-
-import java.util.List;
-
 /**
  * This pipe stereotype takes in an object and decides whether or not to send the object downstream.
  * If the object is not to be sent, null is to be sent instead.

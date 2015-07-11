@@ -1,10 +1,6 @@
 package com.collin.pipe.stereotype;
 
-import akka.actor.ActorRef;
-import akka.actor.UntypedActor;
 import com.collin.pipe.transmission.Message;
-
-import java.util.List;
 
 /**
  * A pipe which transforms one object into one or more objects.

@@ -3,7 +3,6 @@ package com.collin.pipe.stereotype;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import com.collin.pipe.transmission.Message;
 import com.sun.corba.se.impl.io.TypeMismatchException;
 
 import java.util.ArrayList;
@@ -17,9 +16,7 @@ import java.util.List;
  * @param <I>
  */
 public abstract class WrapperPipe<I> extends UntypedActor {
-    /**
-     * The class that all inner pipes will be.
-     */
+
     private List<Class> innerPipes;
 
     /**
@@ -51,13 +48,23 @@ public abstract class WrapperPipe<I> extends UntypedActor {
         }
         return ref;
     }
+
+    /**
+     * Routes the received message to the pipe's ingest method.
+     * @param message Message to be ingested.
+     */
     @Override
     @SuppressWarnings("unchecked")
-    public final void onReceive(Object message) throws Exception {
+    public final void onReceive(Object message) {
         if (message != null) {
             ingest((I)message);
         }
     }
+
+    /**
+     * The method to be overridden to handle messages.
+     * @param i The message to be handled.
+     */
     public abstract void ingest(I i);
 
 }

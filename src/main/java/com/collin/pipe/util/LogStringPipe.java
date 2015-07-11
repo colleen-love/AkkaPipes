@@ -1,15 +1,11 @@
 package com.collin.pipe.util;
 
-import akka.actor.ActorRef;
-import com.collin.pipe.stereotype.Pipe;
 import com.collin.pipe.stereotype.SideEffectPipe;
-
-import java.util.List;
 
 /**
  * A utility side-effect-pipe to log a string to the console.
  */
-public class LogStringPipe extends Pipe<String, String> {
+public class LogStringPipe extends SideEffectPipe<String> {
 
     /**
      * Logs the parameter to the console.

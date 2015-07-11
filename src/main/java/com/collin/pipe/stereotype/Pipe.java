@@ -1,12 +1,6 @@
 package com.collin.pipe.stereotype;
 
-import akka.actor.ActorRef;
-import akka.actor.UntypedActor;
 import com.collin.pipe.transmission.Message;
-import com.sun.corba.se.impl.io.TypeMismatchException;
-
-import javax.xml.bind.TypeConstraintException;
-import java.util.List;
 
 /**
  * A basic pipe. Data of type I is operated on by the 'ingest' method.

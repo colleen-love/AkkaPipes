@@ -1,21 +1,18 @@
 package com.collin.pipe.construction;
 
 import akka.actor.ActorRef;
-import akka.actor.UntypedActor;
 
 /**
  * A pipe opening into which objects can be put.
  * @param <I> The type of objects to be put into the pipe.
  */
 public final class PipeOpening<I> {
-    /**
-     * The first pipe in the pipeline.
-     */
+
     private ActorRef pipeline;
 
     /**
-     * Creates a new PipeOpening with the specified first pipe.
-     * @param pipeline The first pipe in the pipeline.
+     * Creates a new PipeOpening for the specified pipeline..
+     * @param pipeline The pipeline that the opening interacts with.
      */
     public PipeOpening(ActorRef pipeline){
         this.pipeline = pipeline;

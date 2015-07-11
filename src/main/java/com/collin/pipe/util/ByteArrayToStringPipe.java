@@ -1,9 +1,6 @@
 package com.collin.pipe.util;
 
-import akka.actor.ActorRef;
 import com.collin.pipe.stereotype.Pipe;
-
-import java.util.List;
 
 /**
  * Utility pipe to transform a byte array to a string.

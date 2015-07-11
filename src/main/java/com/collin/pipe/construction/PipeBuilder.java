@@ -4,7 +4,6 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -13,9 +12,6 @@ import java.util.List;
  */
 public final class PipeBuilder {
 
-    /**
-     * The Akka ActorSystem into which the pipes are to be created.
-     */
     private ActorSystem system;
 
     /**
@@ -34,8 +30,7 @@ public final class PipeBuilder {
      */
     public PipeOpening build(Schematic schematic) {
         buildRootFirst(schematic.getRoot());
-        PipeOpening opening = new PipeOpening(system.actorOf(Props.create(Pipeline.class, schematic)));
-        return opening;
+        return new PipeOpening(system.actorOf(Props.create(Pipeline.class, schematic)));
     }
 
     /**
@@ -47,10 +42,8 @@ public final class PipeBuilder {
      */
     public PipeOpening buildEndedPipe(Schematic schematic, ActorRef out) {
         buildRootFirst(schematic.getRoot());
-        PipeOpening opening =  new PipeOpening(system.actorOf(Props.create(Pipeline.class, schematic, out)));
-        return opening;
+        return new PipeOpening(system.actorOf(Props.create(Pipeline.class, schematic, out)));
     }
-
     private void buildRootFirst(Schematic.Pipe pipe) {
         buildPipe(pipe);
         pipe.getChildren().forEach(child -> {
@@ -59,12 +52,6 @@ public final class PipeBuilder {
             }
         });
     }
-
-    /**
-     * Builds a pipe with a specific end.
-     * @param pipe The pipe to be built.
-     * @return An actorref of the built pipe.
-     */
     private ActorRef buildPipe(Schematic.Pipe pipe) {
         ActorRef child;
         if (pipe.hasWrapper()){

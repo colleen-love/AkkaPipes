@@ -1,9 +1,7 @@
 package com.collin.pipe.concurrency;
 
 import akka.actor.ActorRef;
-import akka.actor.Props;
 import akka.routing.*;
-import com.collin.pipe.stereotype.Pipe;
 import com.collin.pipe.stereotype.WrapperPipe;
 
 import java.lang.reflect.InvocationTargetException;
@@ -14,7 +12,6 @@ import java.util.List;
  * This wrapper acts as a load balancer. It routes incoming messages to a pool of
  * inner pipes of a type decided at construction.
  * @param <I> The type of objects to come in.
- * @param <O> The type of objects to go out.
  */
 public class LoadBalancingPipeWrapper<I> extends WrapperPipe<I> {
 
@@ -31,10 +28,6 @@ public class LoadBalancingPipeWrapper<I> extends WrapperPipe<I> {
         super(innerPipes);
         initSystem();
     }
-
-    /**
-     * Initializes the router pool.
-     */
     @SuppressWarnings("unchecked")
     private void initSystem() {
         List<Routee> routees = new ArrayList<>();
@@ -56,6 +49,10 @@ public class LoadBalancingPipeWrapper<I> extends WrapperPipe<I> {
         }
     }
 
+    /**
+     * Routes the incoming message to it's routees.
+     * @param i The incoming message that's being routed.
+     */
     @Override
     public void ingest(I i) {
         router.route(i, getSender());

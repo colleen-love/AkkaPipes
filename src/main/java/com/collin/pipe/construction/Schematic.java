@@ -16,9 +16,7 @@ import java.util.List;
  * The root does not have a parent.
  */
 public final class Schematic {
-    /**
-     * The root of the schematic, the first representation.
-     */
+
     private Pipe root;
     private Boolean disable = false;
 
@@ -41,6 +39,10 @@ public final class Schematic {
             throw new UnsupportedOperationException();
         }    }
 
+    /**
+     * Gets all of the pipes in this pipeline.
+     * @return all of the pipes in the pipeline.
+     */
     public List<Pipe> allPipes() {
         if (!this.disable) {
             return find(this.root, new ArrayList<>());
@@ -49,6 +51,9 @@ public final class Schematic {
         }
     }
 
+    /**
+     * Disables the pipe schematic for future use.
+     */
     public void disable() {
         this.disable = true;
     }
@@ -60,10 +65,6 @@ public final class Schematic {
         }
         return pipes;
     }
-    @Override
-    public String toString() {
-        return this.root.toString();
-    }
 
     /**
      * This represents a pipe.
@@ -71,87 +72,47 @@ public final class Schematic {
      * Also, the pipe will have an actor reference to reference the actual pipe after it has been built.
      */
     public class Pipe extends AbstractPipe {
-        /**
-         * The pipe's parents. It may have more than one.
-         * Each parent's output type must equal this pipe's input type.
-         */
-        private List<Pipe> parents = new ArrayList<>();
-        /**
-         * This pipe's children. It may have more than one.
-         * Each child's input type must equal this pipe's output type.
-         */
+
         private List<Pipe> children = new ArrayList<>();
-        /**
-         * An actor reference for the pipe, once it has been built.
-         */
         private ActorRef actorRef = null;
-        /**
-         * If the class is not of type 'Pipe' an error will be thrown.
-         * Creates a new pipe representation.
-         * @param clazz The class of pipe to represent.
-         */
-        public Pipe(Class clazz){
-            this(clazz, null);
-        }
 
         /**
          * Creates a new pipe representation.
-         * If the class is not of type 'Pipe' an error will be thrown.
-         * If the parent's out type doesn't match the pipe's or it's wrapper's in type, an error will be thrown.
          * @param clazz The class of the pipe to represent.
-         * @param parent The parent of the pipe.
+         * @throws TypeMismatchException A class not of type pipe is created or the parent's
+         * 'out' type doesn't match this pipe's 'in' type.
          */
-        public Pipe(Class clazz, Pipe parent) throws TypeMismatchException {
+        public Pipe(Class clazz) throws TypeMismatchException {
             if (com.collin.pipe.stereotype.Pipe.class.isAssignableFrom(clazz)) {
                 this.clazz = clazz;
             } else {
                 throw new TypeMismatchException();
             }
-            if (parent != null) {
-                this.parents.add(parent);
-            }
         }
 
         /**
          * Adds a child to the pipe's children.
-         * If the parent's 'out' type doesn't match the pipe's or it's wrapper's 'in' type, an error will be thrown.
          * @param clazz The class of the child to be added.
          * @return The representation of the pipe's child.
+         * @throws TypeMismatchException the parent's 'out' type doesn't match this pipe's 'in' type.
          */
         public Pipe addChild(Class clazz) throws TypeMismatchException {
-            Pipe child = new Pipe(clazz, this);
+            Pipe child = new Pipe(clazz);
             checkClassCompatibility(this, child);
             this.children.add(child);
             return child;
         }
 
+        /**
+         * Adds a child to the pipe's children.
+         * @param child the preexisting Pipe to add as a child.
+         * @return The representation of the pipe's child.
+         * @throws TypeMismatchException the parent's 'out' type doesn't match this pipe's 'in' type.
+         */
         public Pipe addChild(Pipe child) throws TypeMismatchException {
             checkClassCompatibility(this, child);
             this.children.add(child);
             return child;
-        }
-
-        /**
-         * Checks to see if all of this pipe representation's children have an actor reference.
-         * @return True of all children have an actor reference. False otherwise.
-         */
-        public Boolean childrenPopulated() {
-            for (Pipe child : getChildren()) {
-                if (!child.hasActorRef()) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        /**
-         * Gets all of the pipe representation's children's actor refs.
-         * @return A list of all of the pipe representation's children's actor refs.
-         */
-        public List<ActorRef> getChildrenRefs() {
-            List<ActorRef> refs = new ArrayList<>();
-            getChildren().forEach(child -> refs.add(child.getActorRef()));
-            return refs;
         }
 
         /**
@@ -168,32 +129,6 @@ public final class Schematic {
          */
         public Boolean hasChildren() {
             return !this.children.isEmpty();
-        }
-
-        /**
-         * Returns this pipe's parents.
-         * @return A list of this pipe representation's parents.
-         */
-        public List<Pipe> getParents() {
-            return this.parents;
-        }
-
-        /**
-         * Returns whether or not the pipe has parents.
-         * @return True if the pipe representation has at least one parent, false otherwise.
-         */
-        public Boolean hasParents() {
-            return !this.parents.isEmpty();
-        }
-
-        /**
-         * Adds a parent to this to the pipe's parents.
-         * If the parent's 'out' type doesn't match this pipe's or it's wrapper's 'in' type, an error will be thrown.
-         * @param parent The parent to be added.
-         */
-        public void addParent(Pipe parent) {
-            this.parents.add(parent);
-            parent.addChild(this);
         }
 
         /**
@@ -219,15 +154,21 @@ public final class Schematic {
         public Boolean hasActorRef() {
             return this.actorRef != null;
         }
-        public String getId() {
-            return this.actorRef.toString();
-        }
+
         /**
-         * Checks to see if a parent is compatible with a child.
-         * Compatibility is defined if a parent's 'out' type equals a child's 'in' type.
-         * @param parent The parent to be checked
-         * @param child The child to be checked.
+         * Get's this pipe's ID
+         * @return the id of the pipe
+         * @throws UnsupportedOperationException if the pipeline hasn't yet been constructed
          */
+        public String getId() throws  UnsupportedOperationException {
+            if (this.hasActorRef()) {
+                return this.actorRef.toString();
+            } else {
+                throw new UnsupportedOperationException();
+            }
+        }
+
+        @SuppressWarnings("unchecked")
         private void checkClassCompatibility(Pipe parent, Pipe child) throws TypeMismatchException {
             if (parent != null && child != null) {
                 if(!child.getInType().isAssignableFrom(parent.getOutType())) {
@@ -240,6 +181,7 @@ public final class Schematic {
             return (Class) ((ParameterizedType) this.clazz.getGenericSuperclass())
                     .getActualTypeArguments()[0];
         }
+
         private Class getOutType() {
             Class genericOutParameter;
             if (FilterPipe.class.isAssignableFrom(this.clazz) || SideEffectPipe.class.isAssignableFrom(this.clazz)){
@@ -251,29 +193,31 @@ public final class Schematic {
             }
             return genericOutParameter;
         }
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append(this.clazz + ": " + this.actorRef);
-            for(Pipe child : this.children) {
-                sb.append("\n" + child.toString());
-            }
-            return sb.toString();
-        }
-
     }
+
+    /**
+     * A wrapper representation in the schematic
+     */
     public class Wrapper extends AbstractPipe {
-        private AbstractPipe innerPipe;
-        public Wrapper(AbstractPipe inner, Class clazz) {
-            this.innerPipe = inner;
+
+        /**
+         * Creates a new wrapper.
+         * @param clazz the class of the wrapper
+         */
+        public Wrapper(Class clazz) {
             this.clazz = clazz;
         }
     }
     private abstract class AbstractPipe {
+
         /**
-         * The type of class that this pipe is.
+         * the class of the pipe
          */
         protected Class clazz = null;
 
+        /**
+         * the wrapper of the pipe
+         */
         protected Wrapper wrapper = null;
 
         /**
@@ -284,19 +228,42 @@ public final class Schematic {
             return this.clazz;
         }
 
-        public Wrapper wrap(Class clazz) {
+        /**
+         * Wraps the pipe with a wrapper
+         * @param clazz the class of the wrapper
+         * @return The wrapper's object.
+         * @throws UnsupportedOperationException If the pipe already has a wrapper.
+         */
+        public Wrapper wrap(Class clazz) throws UnsupportedOperationException {
             if (this.hasWrapper()) {
                 throw new UnsupportedOperationException();
             }
-            this.wrapper = new Wrapper(this, clazz);
+            this.wrapper = new Wrapper(clazz);
             return this.wrapper;
         }
+
+        /**
+         * Returns whether or not the pipe has a wrapper.
+         * @return True if the pipe has a wrapper, false otherwise.
+         */
         public boolean hasWrapper() {
             return this.wrapper != null;
         }
+
+        /**
+         * Gets the pipe's wrapper
+         * @return The wrapper of the pipe.
+         */
         public Wrapper getWrapper() {
             return this.wrapper;
         }
+
+        /**
+         * Gets all wrappers, including the wrappers of this pipe's wrapper, etc.
+         * @return A list of classes, with element 0 being the class of this pipe,
+         * element 1 being the class of this pipe's wrapper, element 2 being the class
+         * of this pipe's wrapper's wrapper, etc.
+         */
         public List<Class> getWrappers() {
             Wrapper wrapper = this.getWrapper();
             List<Class> wrappers = new ArrayList<>();

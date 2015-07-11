@@ -10,13 +10,6 @@ import java.util.List;
  * @param <T> The data to enter and exit the pipe.
  */
 public abstract class FilterPipe<T> extends Pipe<T, T> {
-    /**
-     * Creates a new pipe instance. Downstream pipes must be provided (although the list may be empty).
-     * @param downstreamPipes The pipes to which the resultant message should be routed.
-     */
-    public FilterPipe(List<ActorRef> downstreamPipes) {
-        super(downstreamPipes);
-    }
 
     /**
      * Checks to ensure that the pipe conforms to the filter stereotype.

@@ -1,6 +1,7 @@
 package com.collin.pipe.construction;
 
 import akka.actor.ActorRef;
+import akka.actor.UntypedActor;
 
 /**
  * A pipe opening into which objects can be put.
@@ -10,14 +11,14 @@ public final class PipeOpening<I> {
     /**
      * The first pipe in the pipeline.
      */
-    private ActorRef first;
+    private ActorRef pipeline;
 
     /**
      * Creates a new PipeOpening with the specified first pipe.
-     * @param first The first pipe in the pipeline.
+     * @param pipeline The first pipe in the pipeline.
      */
-    public PipeOpening(ActorRef first){
-        this.first = first;
+    public PipeOpening(ActorRef pipeline){
+        this.pipeline = pipeline;
     }
 
     /**
@@ -25,6 +26,6 @@ public final class PipeOpening<I> {
      * @param i the object to be put into the pipeline.
      */
     public void put(I i) {
-        first.tell(i, first);
+        pipeline.tell(i, pipeline);
     }
 }

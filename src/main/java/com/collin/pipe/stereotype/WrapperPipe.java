@@ -2,6 +2,8 @@ package com.collin.pipe.stereotype;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import akka.actor.UntypedActor;
+import com.collin.pipe.transmission.Message;
 import com.sun.corba.se.impl.io.TypeMismatchException;
 
 import java.util.ArrayList;
@@ -14,7 +16,7 @@ import java.util.List;
  * Inner pipes will all be of the same type.
  * @param <I>
  */
-public abstract class WrapperPipe<I, O> extends AbstractPipe<I, O> {
+public abstract class WrapperPipe<I> extends UntypedActor {
     /**
      * The class that all inner pipes will be.
      */
@@ -23,10 +25,8 @@ public abstract class WrapperPipe<I, O> extends AbstractPipe<I, O> {
     /**
      * Creates a new pipe wrapper. Downstream pipes must be provided (although the list may be empty).
      * @param innerPipes The type of objects that this pipe will contain.
-     * @param downstreamPipes The pipes to which the resultant message should be routed.    * @param inner
      */
-    public WrapperPipe(List<Class> innerPipes, List<ActorRef> downstreamPipes) {
-        super(downstreamPipes);
+    public WrapperPipe(List<Class> innerPipes) {
         innerPipes.forEach(clazz -> {
             if (!AbstractPipe.class.isAssignableFrom(clazz)) {
                 throw new TypeMismatchException();
@@ -45,10 +45,20 @@ public abstract class WrapperPipe<I, O> extends AbstractPipe<I, O> {
         if (innerPipes.size() > 1) {
             List<Class> innerInnerPipes = new ArrayList<>(this.innerPipes);
             innerInnerPipes.remove(innerInnerPipes.size() - 1);
-            ref = getContext().actorOf(Props.create(innerPipe, innerInnerPipes, this.downstreamPipes));
+            ref = getContext().actorOf(Props.create(innerPipe, innerInnerPipes));
         } else {
-            ref = getContext().actorOf(Props.create(innerPipe, this.downstreamPipes));
+            ref = getContext().actorOf(Props.create(innerPipe));
         }
         return ref;
     }
+    @Override
+    @SuppressWarnings("unchecked")
+    public final void onReceive(Object message) throws Exception {
+        if (message != null) {
+            ingest((I)message);
+        }
+    }
+    protected abstract void ingest(I i);
+
 }
+

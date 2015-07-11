@@ -4,7 +4,6 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 
-import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,8 +33,8 @@ public final class PipeBuilder {
      * @return The pipeopening used to access this pipeline.
      */
     public PipeOpening build(Schematic schematic) {
-        buildLeavesFirst(schematic.getRoot(), null);
-        return new PipeOpening(schematic.getRoot().getActorRef());
+        buildRootFirst(schematic.getRoot());
+        return new PipeOpening(system.actorOf(Props.create(Pipeline.class, schematic)));
     }
 
     /**
@@ -46,73 +45,36 @@ public final class PipeBuilder {
      * @return The pipeopening used to access this pipeline.
      */
     public PipeOpening buildEndedPipe(Schematic schematic, ActorRef out) {
-        buildLeavesFirst(schematic.getRoot(), out);
-        return new PipeOpening(schematic.getRoot().getActorRef());
+        buildRootFirst(schematic.getRoot());
+        return new PipeOpening(system.actorOf(Props.create(Pipeline.class, schematic, out)));
     }
 
-    /**
-     * Construction method. Uses recursion to build a pipeline, starting with the
-     * leaves and moving back up to the root.
-     * @param pipe The pipe to be built.
-     * @param out The actorref to receive notification if this in an ended pipe.
-     */
-    private void buildLeavesFirst(Schematic.PipeRep pipe, ActorRef out){
-        if (pipe.hasChildren()) {
-            pipe.getChildren().forEach(child -> buildLeavesFirst(child, out));
-        } else {
-            buildPipe(pipe, out);
-            if (pipe.hasParents()) {
-                pipe.getParents().forEach(parent -> tryToBuildParent(parent));
+    private void buildRootFirst(Schematic.Pipe pipe) {
+        buildPipe(pipe);
+        pipe.getChildren().forEach(child -> {
+            if (!child.hasActorRef()) {
+                buildRootFirst(child);
             }
-        }
+        });
     }
 
     /**
      * Builds a pipe with a specific end.
      * @param pipe The pipe to be built.
-     * @param downstream the downstream pipes of the pipe to be built.
      * @return An actorref of the built pipe.
      */
-    private ActorRef buildPipe(Schematic.PipeRep pipe, ActorRef downstream) {
-        List<ActorRef> downstreamList = new ArrayList<>();
-        if(downstream != null) {
-            downstreamList.add(downstream);
-        }
-        return buildPipe(pipe, downstreamList);
-    }
-
-    /**
-     * Builds a pipe with a specific end.
-     * @param pipe The pipe to be built.
-     * @param downstream the downstream pipes of the pipe to be built.
-     * @return An actorref of the built pipe.
-     */
-    private ActorRef buildPipe(Schematic.PipeRep pipe, List<ActorRef> downstream) {
+    private ActorRef buildPipe(Schematic.Pipe pipe) {
         ActorRef child;
         if (pipe.hasWrapper()){
-            List<Class> wrappers = pipe.getWrappers();
-            Class outermost = wrappers.get(wrappers.size() - 1);
-            wrappers.remove(wrappers.size() - 1);
-            wrappers.add(0, pipe.getClazz());
-            child = system.actorOf(Props.create(outermost, wrappers, downstream ));
+            List<Class> classes = pipe.getWrappers();
+            Class outermost = classes.get(classes.size() - 1);
+            classes.remove(classes.size() - 1);
+            classes.add(0, pipe.getClazz());
+            child = system.actorOf(Props.create(outermost, classes));
         } else {
-            child = system.actorOf(Props.create(pipe.getClazz(), downstream));
+            child = system.actorOf(Props.create(pipe.getClazz()));
         }
         pipe.setActorRef(child);
         return child;
-    }
-
-    /**
-     * Tries to build a pipe's parent. If all of the parents children are built, it is built.
-     * @param parent The parent pipe to be built.
-     */
-    private void tryToBuildParent(Schematic.PipeRep parent) {
-        if (parent.childrenPopulated()) {
-            List<ActorRef> children = parent.getChildrenRefs();
-            buildPipe(parent, children);
-            if (parent.hasParents()) {
-                parent.getParents().forEach(grandparent -> tryToBuildParent(grandparent));
-            }
-        }
     }
 }

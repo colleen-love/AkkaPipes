@@ -1,6 +1,8 @@
 package com.collin.pipe.stereotype;
 
 import akka.actor.ActorRef;
+import akka.actor.UntypedActor;
+import com.collin.pipe.transmission.Message;
 
 import java.util.List;
 
@@ -11,24 +13,17 @@ import java.util.List;
  * @param <I> The type of object to be received.
  * @param <O> The type of object to be sent.
  */
-public abstract class MultiPipe<I, O> extends AbstractPipe<I, Iterable<O>>{
-    /**
-     * Creates a new pipe instance. Downstream pipes must be provided (although the list may be empty).
-     * @param downstreamPipes The pipes to which the resultant message should be routed.
-     */
-    public MultiPipe(List<ActorRef> downstreamPipes) {
-        super(downstreamPipes);
-    }
+public abstract class MultiPipe<I, O> extends AbstractPipe<I, Iterable<O>> {
 
     /**
      * Sends the outbound O objects to the downstream pipes.
      * @param outbound a series of O objects to be sent downstream.
      */
-    protected final void sendMessageDownstream(Iterable<O> outbound) {
-        for (ActorRef downstreamPipe : this.downstreamPipes) {
-            for(O o : outbound) {
-                downstreamPipe.tell(o, this.getSelf());
-            }
+    @Override
+    protected final void send(Iterable<O> outbound) {
+        for(O o : outbound) {
+            Message<O> info = new Message<>(this.getId(), o);
+            this.getSender().tell(info, this.getSelf());
         }
     }
 }

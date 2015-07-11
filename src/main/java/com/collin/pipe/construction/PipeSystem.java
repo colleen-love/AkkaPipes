@@ -5,7 +5,7 @@ import akka.actor.ActorSystem;
 /**
  * A pipe system. This holds a reference to a default actor system called 'pipeline'.
  */
-public class PipeSystem {
+public final class PipeSystem {
     /**
      * The default actor system.
      */

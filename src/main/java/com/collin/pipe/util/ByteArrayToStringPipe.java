@@ -9,9 +9,6 @@ import java.util.List;
  * Utility pipe to transform a byte array to a string.
  */
 public class ByteArrayToStringPipe extends Pipe<byte[], String> {
-    public ByteArrayToStringPipe(List<ActorRef> downstreamPipes) {
-        super(downstreamPipes);
-    }
 
     /**
      * Transforms a series of bytes into a string.

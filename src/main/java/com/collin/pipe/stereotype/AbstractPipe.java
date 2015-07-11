@@ -2,28 +2,55 @@ package com.collin.pipe.stereotype;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
+import com.collin.pipe.transmission.Message;
+import com.sun.corba.se.impl.io.TypeMismatchException;
 
-import java.util.List;
-
-/**
- * An Abstract pipe. This class is the foundation for an object which takes in an object,
- * does an operation on the object, and sends the resultant object out.
- * Do not extend this pipe. Instead, extend the other stereotypes.
- * The implementation of receiving and sending information is left to subclasses.
- * @param <I> The type of object that the pipe will receive and process.
- * @param <O> The type of object that will result from the processing.
- */
 public abstract class AbstractPipe<I, O> extends UntypedActor {
+
+    private String id;
     /**
-     * A list of the pipes to which to route the resultant data.
+     * This message is called receipt of data of type I (from upstream pipes).
+     * It ingests the message to produce an object of type O and sends it downstream.
+     * Null handling of messages occurs here, there is no need for it to be implemented
+     * in the 'ingest' menthod.
+     * @param message The object that is received for processing.
+     * @throws Exception
      */
-    protected final List<ActorRef> downstreamPipes;
+    @Override
+    @SuppressWarnings("unchecked")
+    public final void onReceive(Object message) throws Exception {
+        if (message != null) {
+            Message<I> info = (Message)message;
+            I inbound = info.getInfo();
+            this.id = info.getId();
+            O outbound = ingest(inbound);
+            if (additionalLogic(inbound, outbound)) {
+                send(outbound);
+            } else {
+                throw new TypeMismatchException("Pipe doesn't conform to stereotype.");
+            }
+        }
+    }
+    protected String getId(){
+        return this.id;
+    }
+    /**
+     * The method to be overriden by other pipes. It will take in data of type I
+     * and transofrm it to type O.
+     * @param i The data received by upstream pipes.
+     * @return The transformed data to send to downstream pipes.
+     */
+    protected abstract O ingest(I i);
+
+    protected abstract void send(O outbound);
 
     /**
-     * Creates a new pipe instance. Downstream pipes must be provided (although the list may be empty).
-     * @param downstreamPipes The pipes to which the resultant message should be routed.
+     * Additional logic to ensure that the pipe is behaving correctly.
+     * @param inbound The object received.
+     * @param outbound The object to send.
+     * @return Whether or not the pipe conforms to it's stereotype.
      */
-    public AbstractPipe(List<ActorRef> downstreamPipes) {
-        this.downstreamPipes = downstreamPipes;
+    protected Boolean additionalLogic(I inbound, O outbound) {
+        return true;
     }
 }

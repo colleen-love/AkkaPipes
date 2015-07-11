@@ -2,7 +2,6 @@ package com.collin.pipe.construction;
 
 import akka.actor.ActorRef;
 import com.collin.pipe.stereotype.FilterPipe;
-import com.collin.pipe.stereotype.Pipe;
 import com.collin.pipe.stereotype.SideEffectPipe;
 import com.sun.corba.se.impl.io.TypeMismatchException;
 
@@ -20,22 +19,38 @@ public final class Schematic {
     /**
      * The root of the schematic, the first representation.
      */
-    private PipeRep root;
+    private Pipe root;
 
     /**
      * Creates a new schematic with the first pipe representation.
      * @param clazz The class of the first pipe.
      */
     public Schematic(Class clazz) {
-       root = new PipeRep(clazz);
+       root = new Pipe(clazz);
     }
 
     /**
      * Gets the root (the first pipe representation) of this schematic.
      * @return the root of the schematic.
      */
-    public PipeRep getRoot() {
+    public Pipe getRoot() {
         return this.root;
+    }
+
+    public List<Pipe> allPipes() {
+        return find(this.root, new ArrayList<>());
+    }
+
+    private List<Pipe> find(Pipe pipe, List<Pipe> pipes) {
+        pipes.add(pipe);
+        for (Pipe child : pipe.getChildren()) {
+            find(child, pipes);
+        }
+        return pipes;
+    }
+    @Override
+    public String toString() {
+        return this.root.toString();
     }
 
     /**
@@ -43,38 +58,38 @@ public final class Schematic {
      * It has a class and children associated with it. Optionally, it has a wrapper class and a list of parents.
      * Also, the pipe will have an actor reference to reference the actual pipe after it has been built.
      */
-    public class PipeRep extends AbstractRep {
+    public class Pipe extends AbstractPipe {
         /**
          * The pipe's parents. It may have more than one.
          * Each parent's output type must equal this pipe's input type.
          */
-        private List<PipeRep> parents = new ArrayList<>();
+        private List<Pipe> parents = new ArrayList<>();
         /**
          * This pipe's children. It may have more than one.
          * Each child's input type must equal this pipe's output type.
          */
-        private List<PipeRep> children = new ArrayList<>();
+        private List<Pipe> children = new ArrayList<>();
         /**
          * An actor reference for the pipe, once it has been built.
          */
-        private ActorRef self = null;
+        private ActorRef actorRef = null;
         /**
-         * If the class is not of type 'PipeRep' an error will be thrown.
+         * If the class is not of type 'Pipe' an error will be thrown.
          * Creates a new pipe representation.
          * @param clazz The class of pipe to represent.
          */
-        public PipeRep(Class clazz){
+        public Pipe(Class clazz){
             this(clazz, null);
         }
 
         /**
          * Creates a new pipe representation.
-         * If the class is not of type 'PipeRep' an error will be thrown.
+         * If the class is not of type 'Pipe' an error will be thrown.
          * If the parent's out type doesn't match the pipe's or it's wrapper's in type, an error will be thrown.
          * @param clazz The class of the pipe to represent.
          * @param parent The parent of the pipe.
          */
-        public PipeRep(Class clazz, PipeRep parent) throws TypeMismatchException {
+        public Pipe(Class clazz, Pipe parent) throws TypeMismatchException {
             if (com.collin.pipe.stereotype.Pipe.class.isAssignableFrom(clazz)) {
                 this.clazz = clazz;
             } else {
@@ -91,14 +106,14 @@ public final class Schematic {
          * @param clazz The class of the child to be added.
          * @return The representation of the pipe's child.
          */
-        public PipeRep addChild(Class clazz) throws TypeMismatchException {
-            PipeRep child = new PipeRep(clazz, this);
+        public Pipe addChild(Class clazz) throws TypeMismatchException {
+            Pipe child = new Pipe(clazz, this);
             checkClassCompatibility(this, child);
             this.children.add(child);
             return child;
         }
 
-        public PipeRep addChild(PipeRep child) throws TypeMismatchException {
+        public Pipe addChild(Pipe child) throws TypeMismatchException {
             checkClassCompatibility(this, child);
             this.children.add(child);
             return child;
@@ -109,7 +124,7 @@ public final class Schematic {
          * @return True of all children have an actor reference. False otherwise.
          */
         public Boolean childrenPopulated() {
-            for (PipeRep child : getChildren()) {
+            for (Pipe child : getChildren()) {
                 if (!child.hasActorRef()) {
                     return false;
                 }
@@ -131,7 +146,7 @@ public final class Schematic {
          * Returns this pipe's children.
          * @return A list of this pipe rep's children.
          */
-        public List<PipeRep> getChildren() {
+        public List<Pipe> getChildren() {
             return this.children;
         }
 
@@ -147,7 +162,7 @@ public final class Schematic {
          * Returns this pipe's parents.
          * @return A list of this pipe representation's parents.
          */
-        public List<PipeRep> getParents() {
+        public List<Pipe> getParents() {
             return this.parents;
         }
 
@@ -164,14 +179,9 @@ public final class Schematic {
          * If the parent's 'out' type doesn't match this pipe's or it's wrapper's 'in' type, an error will be thrown.
          * @param parent The parent to be added.
          */
-        public void addParent(PipeRep parent) {
-            checkInfiniteLoop(parent);
+        public void addParent(Pipe parent) {
             this.parents.add(parent);
             parent.addChild(this);
-        }
-
-        private void checkInfiniteLoop(PipeRep parent) {
-            throw new UnsupportedOperationException();
         }
 
         /**
@@ -179,7 +189,7 @@ public final class Schematic {
          * @param actorRef The actor ref to set.
          */
         public void setActorRef(ActorRef actorRef) {
-            this.self = actorRef;
+            this.actorRef = actorRef;
         }
 
         /**
@@ -187,7 +197,7 @@ public final class Schematic {
          * @return The pipe's actor ref.
          */
         public ActorRef getActorRef() {
-            return this.self;
+            return this.actorRef;
         }
 
         /**
@@ -195,16 +205,18 @@ public final class Schematic {
          * @return True if this pipe representation has an actor ref, false otherwise.
          */
         public Boolean hasActorRef() {
-            return this.self != null;
+            return this.actorRef != null;
         }
-
+        public String getId() {
+            return this.actorRef.toString();
+        }
         /**
          * Checks to see if a parent is compatible with a child.
          * Compatibility is defined if a parent's 'out' type equals a child's 'in' type.
          * @param parent The parent to be checked
          * @param child The child to be checked.
          */
-        private void checkClassCompatibility(PipeRep parent, PipeRep child) throws TypeMismatchException {
+        private void checkClassCompatibility(Pipe parent, Pipe child) throws TypeMismatchException {
             if (parent != null && child != null) {
                 if(child.getInType() != parent.getOutType()) {
                     throw new TypeMismatchException();
@@ -227,22 +239,30 @@ public final class Schematic {
             }
             return genericOutParameter;
         }
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(this.clazz + ": " + this.actorRef);
+            for(Pipe child : this.children) {
+                sb.append("\n" + child.toString());
+            }
+            return sb.toString();
+        }
 
     }
-    public class WrapRep extends AbstractRep {
-        private AbstractRep innerPipe;
-        public WrapRep(AbstractRep inner, Class clazz) {
+    public class Wrapper extends AbstractPipe {
+        private AbstractPipe innerPipe;
+        public Wrapper(AbstractPipe inner, Class clazz) {
             this.innerPipe = inner;
             this.clazz = clazz;
         }
     }
-    private abstract class AbstractRep {
+    private abstract class AbstractPipe {
         /**
          * The type of class that this pipe is.
          */
         protected Class clazz = null;
 
-        protected WrapRep wrapper = null;
+        protected Wrapper wrapper = null;
 
         /**
          * Returns this pipe's class.
@@ -252,18 +272,18 @@ public final class Schematic {
             return this.clazz;
         }
 
-        public WrapRep wrap(Class clazz) {
-            this.wrapper = new WrapRep(this, clazz);
+        public Wrapper wrap(Class clazz) {
+            this.wrapper = new Wrapper(this, clazz);
             return this.wrapper;
         }
         public boolean hasWrapper() {
             return this.wrapper != null;
         }
-        public WrapRep getWrapper() {
+        public Wrapper getWrapper() {
             return this.wrapper;
         }
         public List<Class> getWrappers() {
-            WrapRep wrapper = this.getWrapper();
+            Wrapper wrapper = this.getWrapper();
             List<Class> wrappers = new ArrayList<>();
             while(wrapper != null) {
                 wrappers.add(wrapper.getClazz());

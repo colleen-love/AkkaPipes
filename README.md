@@ -84,6 +84,14 @@ This has the following output:
     Hello, world.
     HELLO, WORLD.
     hello, world.
+    
+Or sometimes:
+
+    Hello, world.
+    hello, world.
+    HELLO, WORLD.
+    
+It's concurrent, so the order of operations in branched pipe's can happen in any which way.
       
 The pipe builder can also build an 'ended' pipe. This way, after your final pipes are finished processing an object, they sends along the output to the akka actor that you've specified. 
 

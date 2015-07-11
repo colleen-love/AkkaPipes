@@ -115,9 +115,4 @@ There are a few types of pipes.
 
 ##A note about WrapperPipes
 
-These pipes need to be transparent in order to function correctly. When passing data to their inner pipes, they should send messages as their sender. Construction of their inner pipes has also been simplified with the protected class, 'buildInnerPipe().
-
-
-### todo
-
-Add Unit testing
+These pipes need to be transparent in order to function correctly. When passing data to their inner pipes, they should send messages as their sender. Construction of their inner pipes has also been simplified with the protected class, buildInnerPipe().

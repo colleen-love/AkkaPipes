@@ -31,7 +31,7 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
             }
         }
     }
-    protected String getId(){
+    protected final String getId(){
         return this.id;
     }
     /**
@@ -40,7 +40,7 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
      * @param i The data received by upstream pipes.
      * @return The transformed data to send to downstream pipes.
      */
-    protected abstract O ingest(I i);
+    public abstract O ingest(I i);
 
     protected abstract void send(O outbound);
 

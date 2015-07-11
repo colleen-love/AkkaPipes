@@ -58,7 +58,7 @@ public abstract class WrapperPipe<I> extends UntypedActor {
             ingest((I)message);
         }
     }
-    protected abstract void ingest(I i);
+    public abstract void ingest(I i);
 
 }
 

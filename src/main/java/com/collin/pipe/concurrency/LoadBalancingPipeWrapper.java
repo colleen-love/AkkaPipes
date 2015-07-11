@@ -57,7 +57,7 @@ public class LoadBalancingPipeWrapper<I> extends WrapperPipe<I> {
     }
 
     @Override
-    protected void ingest(I i) {
+    public void ingest(I i) {
         router.route(i, getSender());
     }
 }

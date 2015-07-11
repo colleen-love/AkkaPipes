@@ -22,6 +22,7 @@ public final class Pipeline extends UntypedActor {
             map.put(pipe.getId(), pipe);
         });
         this.end = end;
+        schematic.disable();
     }
     @Override
     public void onReceive(Object message) throws Exception {

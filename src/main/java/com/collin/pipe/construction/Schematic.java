@@ -20,6 +20,7 @@ public final class Schematic {
      * The root of the schematic, the first representation.
      */
     private Pipe root;
+    private Boolean disable = false;
 
     /**
      * Creates a new schematic with the first pipe representation.
@@ -34,11 +35,22 @@ public final class Schematic {
      * @return the root of the schematic.
      */
     public Pipe getRoot() {
-        return this.root;
-    }
+        if (!this.disable) {
+             return this.root;
+        } else {
+            throw new UnsupportedOperationException();
+        }    }
 
     public List<Pipe> allPipes() {
-        return find(this.root, new ArrayList<>());
+        if (!this.disable) {
+            return find(this.root, new ArrayList<>());
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public void disable() {
+        this.disable = true;
     }
 
     private List<Pipe> find(Pipe pipe, List<Pipe> pipes) {
@@ -218,7 +230,7 @@ public final class Schematic {
          */
         private void checkClassCompatibility(Pipe parent, Pipe child) throws TypeMismatchException {
             if (parent != null && child != null) {
-                if(child.getInType() != parent.getOutType()) {
+                if(!child.getInType().isAssignableFrom(parent.getOutType())) {
                     throw new TypeMismatchException();
                 }
             }
@@ -273,6 +285,9 @@ public final class Schematic {
         }
 
         public Wrapper wrap(Class clazz) {
+            if (this.hasWrapper()) {
+                throw new UnsupportedOperationException();
+            }
             this.wrapper = new Wrapper(this, clazz);
             return this.wrapper;
         }

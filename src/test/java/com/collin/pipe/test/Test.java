@@ -6,18 +6,20 @@ import com.collin.pipe.construction.PipeOpening;
 import com.collin.pipe.construction.PipeSystem;
 import com.collin.pipe.construction.Schematic;
 import com.collin.pipe.util.LogStringPipe;
+import com.collin.pipe.util.LowercasePipe;
+import com.collin.pipe.util.UppercasePipe;
 
 public class Test {
     public static void main(String[] args) {
         Schematic schematic = new Schematic(LogStringPipe.class);
         Schematic.Pipe logString1 = schematic.getRoot();
-        Schematic.Pipe logString2 = logString1.addChild(LogStringPipe.class);
-        logString2.wrap(LoadBalancingPipeWrapper.class);
-        Schematic.Pipe logString3 = logString1.addChild(LogStringPipe.class);
-        Schematic.Pipe logString4 = logString2.addChild(LogStringPipe.class);
-        logString4.addParent(logString3);
+        Schematic.Pipe uppercase = logString1.addChild(UppercasePipe.class);
+        Schematic.Wrapper wrapper = uppercase.wrap(LoadBalancingPipeWrapper.class);
+        Schematic.Pipe lowercase = logString1.addChild(LowercasePipe.class);
+        Schematic.Pipe logString2 = uppercase.addChild(LogStringPipe.class);
+        logString2.addParent(lowercase);
         PipeBuilder builder = new PipeBuilder(PipeSystem.GetSystem());
         PipeOpening<String> opening = builder.build(schematic);
-        opening.put("Hey 0");
+        opening.put("Hello, world.");
     }
 }

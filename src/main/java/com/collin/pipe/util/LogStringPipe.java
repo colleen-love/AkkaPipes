@@ -18,10 +18,7 @@ public class LogStringPipe extends Pipe<String, String> {
      */
     @Override
     public String ingest(String s) {
-        String[] split = s.split(" ");
-        Integer i = Integer.parseInt(split[1]);
-        s = split[0] + " " + (i + 1);
-        System.out.println(s + " : " + getSelf());
+        System.out.println(s);
         return s;
     }
 }

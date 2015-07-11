@@ -34,7 +34,8 @@ public final class PipeBuilder {
      */
     public PipeOpening build(Schematic schematic) {
         buildRootFirst(schematic.getRoot());
-        return new PipeOpening(system.actorOf(Props.create(Pipeline.class, schematic)));
+        PipeOpening opening = new PipeOpening(system.actorOf(Props.create(Pipeline.class, schematic)));
+        return opening;
     }
 
     /**
@@ -46,7 +47,8 @@ public final class PipeBuilder {
      */
     public PipeOpening buildEndedPipe(Schematic schematic, ActorRef out) {
         buildRootFirst(schematic.getRoot());
-        return new PipeOpening(system.actorOf(Props.create(Pipeline.class, schematic, out)));
+        PipeOpening opening =  new PipeOpening(system.actorOf(Props.create(Pipeline.class, schematic, out)));
+        return opening;
     }
 
     private void buildRootFirst(Schematic.Pipe pipe) {

@@ -8,6 +8,7 @@ import com.sun.corba.se.impl.io.TypeMismatchException;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * This Schematic is a simple tree.
@@ -18,7 +19,6 @@ import java.util.List;
 public final class Schematic {
 
     private Pipe root;
-    private Boolean disable = false;
 
     /**
      * Creates a new schematic with the first pipe representation.
@@ -33,29 +33,15 @@ public final class Schematic {
      * @return the root of the schematic.
      */
     public Pipe getRoot() {
-        if (!this.disable) {
-             return this.root;
-        } else {
-            throw new UnsupportedOperationException();
-        }    }
+        return this.root;
+    }
 
     /**
      * Gets all of the pipes in this pipeline.
      * @return all of the pipes in the pipeline.
      */
     public List<Pipe> allPipes() {
-        if (!this.disable) {
-            return find(this.root, new ArrayList<>());
-        } else {
-            throw new UnsupportedOperationException();
-        }
-    }
-
-    /**
-     * Disables the pipe schematic for future use.
-     */
-    public void disable() {
-        this.disable = true;
+        return find(this.root, new ArrayList<>());
     }
 
     private List<Pipe> find(Pipe pipe, List<Pipe> pipes) {
@@ -74,7 +60,7 @@ public final class Schematic {
     public class Pipe extends AbstractPipe {
 
         private List<Pipe> children = new ArrayList<>();
-        private ActorRef actorRef = null;
+        private String uniqueID = UUID.randomUUID().toString();
 
         /**
          * Creates a new pipe representation.
@@ -88,6 +74,14 @@ public final class Schematic {
             } else {
                 throw new TypeMismatchException();
             }
+        }
+
+        /**
+         * Returns this pipe's unique identifier.
+         * @return the unique ID.
+         */
+        public String getUniqueID() {
+            return this.uniqueID;
         }
 
         /**
@@ -129,43 +123,6 @@ public final class Schematic {
          */
         public Boolean hasChildren() {
             return !this.children.isEmpty();
-        }
-
-        /**
-         * Sets the pipe representation's ActorRef.
-         * @param actorRef The actor ref to set.
-         */
-        public void setActorRef(ActorRef actorRef) {
-            this.actorRef = actorRef;
-        }
-
-        /**
-         * Get's this pipe representation's actor ref.
-         * @return The pipe's actor ref.
-         */
-        public ActorRef getActorRef() {
-            return this.actorRef;
-        }
-
-        /**
-         * Checks to see if the pipe representation has an actor ref.
-         * @return True if this pipe representation has an actor ref, false otherwise.
-         */
-        public Boolean hasActorRef() {
-            return this.actorRef != null;
-        }
-
-        /**
-         * Get's this pipe's ID
-         * @return the id of the pipe
-         * @throws UnsupportedOperationException if the pipeline hasn't yet been constructed
-         */
-        public String getId() throws  UnsupportedOperationException {
-            if (this.hasActorRef()) {
-                return this.actorRef.toString();
-            } else {
-                throw new UnsupportedOperationException();
-            }
         }
 
         @SuppressWarnings("unchecked")

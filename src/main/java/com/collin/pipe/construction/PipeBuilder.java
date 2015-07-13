@@ -29,7 +29,6 @@ public final class PipeBuilder {
      * @return The pipeopening used to access this pipeline.
      */
     public PipeOpening build(Schematic schematic) {
-        buildRootFirst(schematic.getRoot());
         return new PipeOpening(system.actorOf(Props.create(Pipeline.class, schematic)));
     }
 
@@ -41,29 +40,6 @@ public final class PipeBuilder {
      * @return The pipeopening used to access this pipeline.
      */
     public PipeOpening buildEndedPipe(Schematic schematic, ActorRef out) {
-        buildRootFirst(schematic.getRoot());
         return new PipeOpening(system.actorOf(Props.create(Pipeline.class, schematic, out)));
-    }
-    private void buildRootFirst(Schematic.Pipe pipe) {
-        buildPipe(pipe);
-        pipe.getChildren().forEach(child -> {
-            if (!child.hasActorRef()) {
-                buildRootFirst(child);
-            }
-        });
-    }
-    private ActorRef buildPipe(Schematic.Pipe pipe) {
-        ActorRef child;
-        if (pipe.hasWrapper()){
-            List<Class> classes = pipe.getWrappers();
-            Class outermost = classes.get(classes.size() - 1);
-            classes.remove(classes.size() - 1);
-            classes.add(0, pipe.getClazz());
-            child = system.actorOf(Props.create(outermost, classes));
-        } else {
-            child = system.actorOf(Props.create(pipe.getClazz()));
-        }
-        pipe.setActorRef(child);
-        return child;
     }
 }

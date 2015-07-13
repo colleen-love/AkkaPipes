@@ -1,10 +1,14 @@
 package com.collin.pipe.construction;
 
+import akka.actor.Actor;
 import akka.actor.ActorRef;
+import akka.actor.Props;
 import akka.actor.UntypedActor;
 import com.collin.pipe.transmission.Message;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,8 +17,8 @@ import java.util.Map;
 public final class Pipeline extends UntypedActor {
 
     private ActorRef end = null;
-    Map<String, Schematic.Pipe> map = new HashMap<>();
-    Schematic.Pipe root;
+    private Map<String, PipeRef> map = new HashMap<>();
+    private PipeRef root;
 
     /**
      * Creates a new pipeline based on the schematic.
@@ -30,10 +34,8 @@ public final class Pipeline extends UntypedActor {
      * @param end The Actor to which the completed objects are sent.
      */
     public Pipeline(Schematic schematic, ActorRef end) {
-        this.root = schematic.getRoot();
-        schematic.allPipes().forEach(pipe -> map.put(pipe.getId(), pipe));
+        this.root = buildAndMapPipes(schematic.getRoot());
         this.end = end;
-        schematic.disable();
     }
 
     /**
@@ -46,7 +48,7 @@ public final class Pipeline extends UntypedActor {
     public void onReceive(Object message) {
         if (message instanceof Message) {
             Message receivedInfo = (Message) message;
-            Schematic.Pipe p = map.get(receivedInfo.getId());
+            PipeRef p = map.get(receivedInfo.getId());
             if (p.hasChildren()) {
                 p.getChildren().forEach(child -> {
                     Message<Object> sentInfo = new Message<>(child.getId(), receivedInfo.getInfo());
@@ -57,10 +59,62 @@ public final class Pipeline extends UntypedActor {
                     this.end.tell(receivedInfo.getInfo(), getSelf());
                 }
             }
-
         } else {
             Message info = new Message(this.root.getId(), message);
             this.root.getActorRef().tell(info, getSelf());
+        }
+    }
+
+    private PipeRef buildAndMapPipes(Schematic.Pipe pipe) {
+        PipeRef pipeRef = buildPipe(pipe);
+        map.put(pipeRef.getId(), pipeRef);
+        for(Schematic.Pipe child : pipe.getChildren()) {
+            PipeRef childRep;
+            if (!map.containsKey(child.getUniqueID())) {
+                childRep = buildAndMapPipes(child);
+            } else {
+                childRep = map.get(child.getUniqueID());
+            }
+            pipeRef.addChild(childRep);
+        }
+        return pipeRef;
+    }
+    private PipeRef buildPipe(Schematic.Pipe pipe) {
+        ActorRef actorRef;
+        if (pipe.hasWrapper()){
+            List<Class> classes = pipe.getWrappers();
+            Class outermost = classes.get(classes.size() - 1);
+            classes.remove(classes.size() - 1);
+            classes.add(0, pipe.getClazz());
+            actorRef = getContext().actorOf(Props.create(outermost, classes));
+        } else {
+            actorRef = getContext().actorOf(Props.create(pipe.getClazz()));
+        }
+        return new PipeRef(pipe.getUniqueID(), actorRef);
+    }
+
+    private class PipeRef {
+        private String id;
+        private ActorRef actorRef;
+        private List<PipeRef> childrenRefs = new ArrayList<>();
+        private PipeRef(String id, ActorRef ref) {
+            this.id = id;
+            this.actorRef = ref;
+        }
+        private ActorRef getActorRef(){
+            return this.actorRef;
+        }
+        private void addChild(PipeRef child) {
+            this.childrenRefs.add(child);
+        }
+        private List<PipeRef> getChildren() {
+            return this.childrenRefs;
+        }
+        private Boolean hasChildren() {
+            return this.childrenRefs.size() > 0;
+        }
+        private String getId(){
+            return this.id;
         }
     }
 }

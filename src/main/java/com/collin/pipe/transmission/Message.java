@@ -4,7 +4,7 @@ package com.collin.pipe.transmission;
  * The message sent between pipeline and pipes
  * @param <I> The data contained in the message
  */
-public class Message<I> {
+public final class Message<I> {
 
     private String id;
     private I i;

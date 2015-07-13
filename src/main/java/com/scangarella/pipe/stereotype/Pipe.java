@@ -1,6 +1,6 @@
-package com.collin.pipe.stereotype;
+package com.scangarella.pipe.stereotype;
 
-import com.collin.pipe.transmission.Message;
+import com.scangarella.pipe.transmission.Message;
 
 /**
  * A basic pipe. Data of type I is operated on by the 'ingest' method.
@@ -20,7 +20,9 @@ public abstract class Pipe<I, O> extends AbstractPipe<I, O> {
      */
     @Override
     protected final void send(O outbound) {
-        Message<O> info = new Message<>(this.getId(), outbound);
-        this.getSender().tell(info, this.getSelf());
+        if (outbound != null) {
+            Message<O> info = new Message<>(this.getId(), outbound);
+            this.getSender().tell(info, this.getSelf());
+        }
     }
 }

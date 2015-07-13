@@ -1,4 +1,4 @@
-package com.collin.pipe.stereotype;
+package com.scangarella.pipe.stereotype;
 
 /**
  * This pipe takes in an object of type T and sends it back out unchanged.

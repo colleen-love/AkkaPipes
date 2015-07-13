@@ -1,4 +1,4 @@
-package com.collin.pipe.stereotype;
+package com.scangarella.pipe.stereotype;
 
 /**
  * This pipe stereotype takes in an object and decides whether or not to send the object downstream.

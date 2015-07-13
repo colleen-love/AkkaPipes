@@ -1,6 +1,6 @@
-package com.collin.pipe.util;
+package com.scangarella.pipe.util;
 
-import com.collin.pipe.stereotype.SideEffectPipe;
+import com.scangarella.pipe.stereotype.SideEffectPipe;
 
 /**
  * A utility side-effect-pipe to log a string to the console.

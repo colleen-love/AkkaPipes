@@ -1,6 +1,6 @@
-package com.collin.pipe.stereotype;
+package com.scangarella.pipe.stereotype;
 
-import com.collin.pipe.transmission.Message;
+import com.scangarella.pipe.transmission.Message;
 
 /**
  * A pipe which transforms one object into one or more objects.
@@ -18,8 +18,10 @@ public abstract class MultiPipe<I, O> extends AbstractPipe<I, Iterable<O>> {
     @Override
     protected final void send(Iterable<O> outbound) {
         for(O o : outbound) {
-            Message<O> info = new Message<>(this.getId(), o);
-            this.getSender().tell(info, this.getSelf());
+            if (o != null) {
+                Message<O> info = new Message<>(this.getId(), o);
+                this.getSender().tell(info, this.getSelf());
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.collin.pipe.transmission;
+package com.scangarella.pipe.transmission;
 
 /**
  * The message sent between pipeline and pipes

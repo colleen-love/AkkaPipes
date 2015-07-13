@@ -1,4 +1,4 @@
-package com.collin.pipe.construction;
+package com.scangarella.pipe.construction;
 
 import akka.actor.ActorSystem;
 

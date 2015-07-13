@@ -1,9 +1,9 @@
-package com.collin.pipe.construction;
+package com.scangarella.pipe.construction;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import com.collin.pipe.transmission.Message;
+import com.scangarella.pipe.transmission.Message;
 
 import java.util.ArrayList;
 import java.util.HashMap;

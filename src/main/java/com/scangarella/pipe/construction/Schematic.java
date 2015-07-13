@@ -1,8 +1,7 @@
-package com.collin.pipe.construction;
+package com.scangarella.pipe.construction;
 
-import akka.actor.ActorRef;
-import com.collin.pipe.stereotype.FilterPipe;
-import com.collin.pipe.stereotype.SideEffectPipe;
+import com.scangarella.pipe.stereotype.FilterPipe;
+import com.scangarella.pipe.stereotype.SideEffectPipe;
 import com.sun.corba.se.impl.io.TypeMismatchException;
 
 import java.lang.reflect.ParameterizedType;
@@ -69,7 +68,7 @@ public final class Schematic {
          * 'out' type doesn't match this pipe's 'in' type.
          */
         public Pipe(Class clazz) throws TypeMismatchException {
-            if (com.collin.pipe.stereotype.Pipe.class.isAssignableFrom(clazz)) {
+            if (com.scangarella.pipe.stereotype.Pipe.class.isAssignableFrom(clazz)) {
                 this.clazz = clazz;
             } else {
                 throw new TypeMismatchException();

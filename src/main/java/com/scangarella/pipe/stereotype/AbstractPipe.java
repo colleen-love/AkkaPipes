@@ -1,7 +1,7 @@
-package com.collin.pipe.stereotype;
+package com.scangarella.pipe.stereotype;
 
 import akka.actor.UntypedActor;
-import com.collin.pipe.transmission.Message;
+import com.scangarella.pipe.transmission.Message;
 import com.sun.corba.se.impl.io.TypeMismatchException;
 
 /**

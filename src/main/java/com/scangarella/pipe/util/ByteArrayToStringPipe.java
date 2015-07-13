@@ -1,6 +1,6 @@
-package com.collin.pipe.util;
+package com.scangarella.pipe.util;
 
-import com.collin.pipe.stereotype.Pipe;
+import com.scangarella.pipe.stereotype.Pipe;
 
 /**
  * Utility pipe to transform a byte array to a string.

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.scangarella.pipe</groupId>
+    <artifactId>pipe</artifactId>
+    <version>1.0</version>
+    <packaging>jar</packaging>
+    <name>Akka Pipes</name>
+    <description>AkkaPipes is a framework for creating concurrent pipelines.
+        It allows you to quickly and easily build scalable data processing flows.</description>
+    <url>https://github.com/collinscangarella/AkkaPipes/wiki</url>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <name>Collin Scangarella</name>
+            <organizationUrl>https://github.com/collinscangarella</organizationUrl>
+        </developer>
+    </developers>
+    <scm>
+        <connection>scm:git:collinscangarella@github.com:collinscangarella/AkkaPipes.git</connection>
+        <developerConnection>scm:git:collinscangarella@github.com:collinscangarella/AkkaPipes.git</developerConnection>
+        <url>collinscangarella@github.com:collinscangarella/AkkaPipes.git</url>
+    </scm>
+    <dependencies>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-actor_2.11</artifactId>
+            <version>2.3.11</version>
+        </dependency>
+    </dependencies>
+</project>

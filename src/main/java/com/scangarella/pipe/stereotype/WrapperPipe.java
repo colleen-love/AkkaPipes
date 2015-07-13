@@ -1,4 +1,4 @@
-package com.collin.pipe.stereotype;
+package com.scangarella.pipe.stereotype;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
@@ -15,7 +15,7 @@ import java.util.List;
  * Inner pipes will all be of the same type.
  * @param <I>
  */
-public abstract class WrapperPipe<I> extends UntypedActor {
+public abstract class WrapperPipe extends UntypedActor {
 
     private List<Class> innerPipes;
 
@@ -57,15 +57,15 @@ public abstract class WrapperPipe<I> extends UntypedActor {
     @SuppressWarnings("unchecked")
     public final void onReceive(Object message) {
         if (message != null) {
-            ingest((I)message);
+            ingest(message);
         }
     }
 
     /**
      * The method to be overridden to handle messages.
-     * @param i The message to be handled.
+     * @param message The message to be handled.
      */
-    public abstract void ingest(I i);
+    public abstract void ingest(Object message);
 
 }
 

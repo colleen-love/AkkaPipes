@@ -1,6 +1,5 @@
 package com.collin.pipe.construction;
 
-import akka.actor.Actor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
@@ -69,13 +68,13 @@ public final class Pipeline extends UntypedActor {
         PipeRef pipeRef = buildPipe(pipe);
         map.put(pipeRef.getId(), pipeRef);
         for(Schematic.Pipe child : pipe.getChildren()) {
-            PipeRef childRep;
+            PipeRef childRef;
             if (!map.containsKey(child.getUniqueID())) {
-                childRep = buildAndMapPipes(child);
+                childRef = buildAndMapPipes(child);
             } else {
-                childRep = map.get(child.getUniqueID());
+                childRef = map.get(child.getUniqueID());
             }
-            pipeRef.addChild(childRep);
+            pipeRef.addChild(childRef);
         }
         return pipeRef;
     }
@@ -97,23 +96,23 @@ public final class Pipeline extends UntypedActor {
         private String id;
         private ActorRef actorRef;
         private List<PipeRef> childrenRefs = new ArrayList<>();
-        private PipeRef(String id, ActorRef ref) {
+        public PipeRef(String id, ActorRef ref) {
             this.id = id;
             this.actorRef = ref;
         }
-        private ActorRef getActorRef(){
+        public ActorRef getActorRef(){
             return this.actorRef;
         }
-        private void addChild(PipeRef child) {
+        public void addChild(PipeRef child) {
             this.childrenRefs.add(child);
         }
-        private List<PipeRef> getChildren() {
+        public List<PipeRef> getChildren() {
             return this.childrenRefs;
         }
-        private Boolean hasChildren() {
+        public Boolean hasChildren() {
             return this.childrenRefs.size() > 0;
         }
-        private String getId(){
+        public String getId(){
             return this.id;
         }
     }

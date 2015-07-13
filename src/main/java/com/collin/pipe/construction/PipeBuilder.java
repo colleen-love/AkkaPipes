@@ -4,8 +4,6 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 
-import java.util.List;
-
 /**
  * This pipe builder class takes an Akka ActorSystem on construction.
  * It then creates pipes based on a Schematic and returns the pipe opening.

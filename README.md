@@ -14,57 +14,54 @@ Pipes are very easy to make. They have two types: I and O. They also have one pu
     
 After creating a series of pipes for data processing, they are configured in a schematic:
 
-    Schematic schematic = new Schematic(LogStringPipe.class);
-    Schematic.Pipe logString1 = schematic.getRoot();
-    Schematic.Pipe uppercase = logString1.addChild(UppercasePipe.class);
-
+    Schematic schematic = new Schematic(LogIfFrienlyPipe.class);
+    Schematic.Pipe logIfFriendly1 = schematic.getRoot();
+    Schematic.Pipe uppercase = logIfFriendly1.addChild(UppercasePipe.class);
 `
 
-    logString1 -> uppercase
+    logIfFriendly1 -> uppercase
 
 Additionally, pipes can be wrapped by other special wrappable pipes.
 
     Schematic.Wrapper wrapper = uppercase.wrap(LoadBalancingPipeWrapper.class);
-
 `
 
-    logString1 -> wrapper[uppercase]
+    logIfFriendly1 -> wrapper[uppercase]
         
 Wrappers can also be wrapped. This particular wrapper acts as a load balancer with several uppercase pipes inside.
 
 Pipes can have multiple children:
 
-    Schematic.Pipe lowercase = logString1.addChild(LowercasePipe.class);
-
+    Schematic.Pipe lowercase = logIfFriendly1.addChild(LowercasePipe.class);
 `
 
-    logString1 -> wrapper[uppercase]
-              \-> lowercase 
+    logIfFriendly1 -> wrapper[uppercase]
+                  \-> lowercase 
 
 Don't send mutable data through multiple children, though. This can create race conditions, hard to find bugs, and inconsistent results.
 
 Pipes can also have multiple parents:
 
-    Schematic.Pipe logString2 = uppercase.addChild(LogStringPipe.class);
-    lowercase.addChild(logString2);
-    
+    Schematic.Pipe logIfFriendly2 = uppercase.addChild(LogIfFrienlyPipe.class);
+    lowercase.addChild(logIfFriendly2);
 `
 
-    logString1 -> wrapper[uppercase] -> logString2
-              \-> ------- lowercase -->/
+    logIfFriendly1 -> wrapper[uppercase] -> logIfFriendly2
+                  \-> ------- lowercase -->/
 
 Infinite loops are supported in order to enable recursion.
 
-Pipes can also have special error handlers that deal with problems.
+Pipes can also have special error handlers that deal with problems. These can also be wrapped.
 
-    Schematic.ErrorHandler errorHandler = logString2.setErrorHandler(SimpleErrorHandler.class);
-    
+    Schematic.ErrorHandler errorHandler1 = logIfFriendly1.setErrorHandler(SimpleErrorHandler.class);
+    Schematic.ErrorHandler errorHandler2 = logIfFriendly2.setErrorHandler(SimpleErrorHandler.class);
+    Schematic.Wrapper errorWrapper = errorHandler2.wrap(SpinUpPipeWrapper.class);
 `
 
-                                        errorHandler
-                                             ^            
-    logString1 -> wrapper[uppercase] -> logString2
-              \-> ------- lowercase -->/
+     errorHandler1              errorWrapper[errorHandler2]
+          ^                                       ^            
+    logIfFriendly1 -> wrapper[uppercase] -> logIfFriendly2
+                  \-> ------- lowercase -->/
 
 In order to build the pipeline, pass the schematic into a PipeBuilder.
 The pipe builder will need an akka actor system in order to be constructed. There's a default one in the PipeSystem class.
@@ -77,19 +74,28 @@ This gives you a pipe opening into which you can put things. There's no way for 
 In order to use the pipeline, put something into the opening.
 
     opening.put("Hello, world.");
+    
+And ater a short wait, close the system:
+
+    try {
+        Thread.sleep(1000);
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+    PipeSystem.CloseSystem();
         
-This has the following output:
+When this is run, it has the following output:
 
     Hello, world.
-    HELLO, WORLD.
     hello, world.
+    class java.lang.Error: You're yelling
     
 Or sometimes:
 
     Hello, world.
+    class java.lang.Error: You're yelling
     hello, world.
-    HELLO, WORLD.
     
-It's concurrent, so the order of operations in branched pipe's can happen in any which way.
+Since this is a concurrent system, the order of operations in parallel pipes can happen in any which way.
 
-###Want to find out more? There's plenty of information in the wiki.
+You can find this example in the test folder. Want to find out more? There's plenty of information in the wiki.

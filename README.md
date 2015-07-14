@@ -92,18 +92,4 @@ Or sometimes:
     
 It's concurrent, so the order of operations in branched pipe's can happen in any which way.
 
-##Pipe Types
-
-There are a few types of pipes.
-
-1. Pipe: this is a simple pipe. It takes in an object of one type and spits out an object of another type.
-
-2. MultiPipe: this pipe spits out several objects for every one put in. 
-
-3. FilterPipe: this pipe decides whether or not an inputted object will pass through onto the next pipe.
-
-4. SideEffectPipe: this pipe passes through the same object, unchanged. The LogStringPipe is one of these.
-
-5. WrapperPipe: this pipe wraps one of the above types of pipes. It changes how the pipes receive messages. 
-
-Want to find out more? There's plenty of information in the wiki.
+###Want to find out more? There's plenty of information in the wiki.

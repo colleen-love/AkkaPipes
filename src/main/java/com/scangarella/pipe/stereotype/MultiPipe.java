@@ -1,7 +1,5 @@
 package com.scangarella.pipe.stereotype;
 
-import com.scangarella.pipe.transmission.Message;
-
 /**
  * A pipe which transforms one object into one or more objects.
  * Data of type I is operated on by the ingest method; an Iterable of type O results.
@@ -19,8 +17,7 @@ public abstract class MultiPipe<I, O> extends AbstractPipe<I, Iterable<O>> {
     protected final void send(Iterable<O> outbound) {
         for(O o : outbound) {
             if (o != null) {
-                Message<O> info = new Message<>(this.getId(), o);
-                this.getSender().tell(info, this.getSelf());
+                this.downstreamPipes.forEach(pipe -> pipe.tell(o, this.getSelf()));
             }
         }
     }

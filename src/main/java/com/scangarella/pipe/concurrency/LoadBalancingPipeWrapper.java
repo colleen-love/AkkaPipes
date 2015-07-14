@@ -17,18 +17,9 @@ public class LoadBalancingPipeWrapper extends WrapperPipe {
     private Class routingLogic = SmallestMailboxRoutingLogic.class;
     private Integer numberOfRoutees = 4;
     private Router router;
-
-    /**
-     * Creates a new pipe wrapper.
-     *
-     * @param innerPipes The type of objects that this pipe will contain.
-     */
-    public LoadBalancingPipeWrapper(List<Class> innerPipes) {
-        super(innerPipes);
-        initSystem();
-    }
+    @Override
     @SuppressWarnings("unchecked")
-    private void initSystem() {
+    public void initSystem() {
         List<Routee> routees = new ArrayList<>();
         for (int i = 0; i < this.numberOfRoutees; i++) {
             ActorRef r = buildInnerPipe();

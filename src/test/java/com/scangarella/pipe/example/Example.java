@@ -18,7 +18,7 @@ public class Example {
         lowercase.addChild(logString2);
     Schematic.ErrorHandler errorHandler = logString2.setErrorHandler(SimpleErrorHandler.class);
     PipeBuilder builder = new PipeBuilder(PipeSystem.GetSystem());
-    PipeOpening<String> opening = builder.build(schematic, Pipeline.class);
+    PipeOpening<String> opening = builder.build(schematic);
     opening.put("Hello, world.");
     }
 }

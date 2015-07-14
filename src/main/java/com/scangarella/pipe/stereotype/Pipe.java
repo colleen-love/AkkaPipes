@@ -1,7 +1,5 @@
 package com.scangarella.pipe.stereotype;
 
-import com.scangarella.pipe.transmission.Message;
-
 /**
  * A basic pipe. Data of type I is operated on by the 'ingest' method.
  * The resultant data of type O is then forwarded to the downstream pipes.
@@ -21,8 +19,7 @@ public abstract class Pipe<I, O> extends AbstractPipe<I, O> {
     @Override
     protected final void send(O outbound) {
         if (outbound != null) {
-            Message<O> info = new Message<>(this.getId(), outbound);
-            this.getSender().tell(info, this.getSelf());
+            this.downstreamPipes.forEach(pipe -> pipe.tell(outbound, this.getSelf()));
         }
     }
 }

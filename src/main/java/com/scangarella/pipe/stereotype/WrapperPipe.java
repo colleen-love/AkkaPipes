@@ -4,6 +4,8 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import com.scangarella.pipe.error.IncompatibleTypeException;
+import com.scangarella.pipe.transmission.InitializationMessage;
+import com.scangarella.pipe.transmission.WrapperInitializationMessage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,24 +15,12 @@ import java.util.List;
  * by the wrapper pipe's onReceive method. Messages to the inner pipe(s) can be forwarded
  * by the 'tell' method.
  * Inner pipes will all be of the same type.
- * @param <I>
  */
 public abstract class WrapperPipe extends UntypedActor {
 
-    private List<Class> innerPipes;
-
-    /**
-     * Creates a new pipe wrapper. Downstream pipes must be provided (although the list may be empty).
-     * @param innerPipes The type of objects that this pipe will contain.
-     */
-    public WrapperPipe(List<Class> innerPipes) {
-        innerPipes.forEach(clazz -> {
-            if (!AbstractPipe.class.isAssignableFrom(clazz)) {
-                throw new IncompatibleTypeException();
-            }
-        });
-        this.innerPipes = innerPipes;
-    }
+    private List<Class> innerPipes = null;
+    private List<ActorRef> downstream = null;
+    private ActorRef exception = null;
 
     /**
      * Builds an instance of the wrapper's inner pipe.
@@ -42,9 +32,14 @@ public abstract class WrapperPipe extends UntypedActor {
         if (innerPipes.size() > 1) {
             List<Class> innerInnerPipes = new ArrayList<>(this.innerPipes);
             innerInnerPipes.remove(innerInnerPipes.size() - 1);
-            ref = getContext().actorOf(Props.create(innerPipe, innerInnerPipes));
+            ref = getContext().actorOf(Props.create(innerPipe));
+            ref.tell(new WrapperInitializationMessage(innerInnerPipes, downstream, exception), this.getSelf());
         } else {
             ref = getContext().actorOf(Props.create(innerPipe));
+            InitializationMessage init = new InitializationMessage(downstream, exception);
+            if (!init.isBlank()) {
+                ref.tell(init, this.getSelf());
+            }
         }
         return ref;
     }
@@ -57,8 +52,19 @@ public abstract class WrapperPipe extends UntypedActor {
     @SuppressWarnings("unchecked")
     public final void onReceive(Object message) {
         if (message != null) {
-            ingest(message);
+            if (message instanceof WrapperInitializationMessage) {
+                initializePipe((WrapperInitializationMessage) message);
+            } else {
+                ingest(message);
+            }
         }
+    }
+
+    private void initializePipe(WrapperInitializationMessage message) {
+        this.innerPipes = message.getInner();
+        this.downstream = message.getDownstream();
+        this.exception = message.getException();
+        initSystem();
     }
 
     /**
@@ -66,6 +72,8 @@ public abstract class WrapperPipe extends UntypedActor {
      * @param message The message to be handled.
      */
     public abstract void ingest(Object message);
+
+    protected void initSystem() { }
 
 }
 

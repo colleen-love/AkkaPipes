@@ -1,9 +1,12 @@
 package com.scangarella.pipe.stereotype;
 
+import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 import com.scangarella.pipe.error.IncompatibleTypeException;
 import com.scangarella.pipe.transmission.ErrorMessage;
-import com.scangarella.pipe.transmission.Message;
+import com.scangarella.pipe.transmission.InitializationMessage;
+
+import java.util.List;
 
 /**
  * This represents an abstract pipe from which all pipe classes (except the wrapperpipe)
@@ -13,7 +16,8 @@ import com.scangarella.pipe.transmission.Message;
  */
 public abstract class AbstractPipe<I, O> extends UntypedActor {
 
-    private String id;
+    protected List<ActorRef> downstreamPipes;
+    private ActorRef exceptionHandler;
     /**
      * This message is called receipt of data of type I (from upstream pipes).
      * It ingests the message to produce an object of type O and sends it downstream.
@@ -25,24 +29,22 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
     @SuppressWarnings("unchecked")
     public final void onReceive(Object message) {
         if (message != null) {
-            Message<I> info = (Message)message;
-            I inbound = info.getInfo();
-            this.id = info.getId();
-            O outbound = ingest(inbound);
-            if (additionalLogic(inbound, outbound)) {
-                send(outbound);
+            if(message instanceof  InitializationMessage) {
+                initializePipe((InitializationMessage)message);
             } else {
-                throw new IncompatibleTypeException("Pipe doesn't conform to stereotype.");
+                I inbound = (I) message;
+                O outbound = ingest(inbound);
+                if (additionalLogic(inbound, outbound)) {
+                    send(outbound);
+                } else {
+                    throw new IncompatibleTypeException("Pipe doesn't conform to stereotype.");
+                }
             }
         }
     }
-
-    /**
-     * Gets the id of the current message being processed.
-     * @return The id of the current message being processed.
-     */
-    protected final String getId(){
-        return this.id;
+    private void initializePipe(InitializationMessage message) {
+        this.downstreamPipes = message.getDownstream();
+        this.exceptionHandler = message.getException();
     }
     /**
      * The method to be overridden by other pipes. It will take in data of type I
@@ -69,6 +71,6 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
     }
 
     protected void reportError(ErrorMessage errorMessage) {
-        this.getSender().tell(new Message<ErrorMessage>(this.getId(), errorMessage), this.getSelf());
+        this.exceptionHandler.tell(errorMessage, this.getSelf());
     }
 }

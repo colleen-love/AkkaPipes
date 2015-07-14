@@ -76,7 +76,6 @@ public final class Schematic {
     public class Pipe extends AbstractPipe {
 
         private List<Pipe> children = new ArrayList<>();
-        private String uniqueID = UUID.randomUUID().toString();
         private ErrorHandler errorHandler;
 
         /**
@@ -97,14 +96,6 @@ public final class Schematic {
             } else {
                 throw new IncompatibleTypeException();
             }
-        }
-
-        /**
-         * Returns this pipe's unique identifier.
-         * @return the unique ID.
-         */
-        public String getUniqueID() {
-            return this.uniqueID;
         }
 
         /**
@@ -205,17 +196,25 @@ public final class Schematic {
             this.clazz = clazz;
         }
     }
-    public class ErrorHandler extends BasicPipe {
+
+    public class ErrorHandler extends AbstractPipe {
         public ErrorHandler(Class clazz) {
             this.clazz = clazz;
         }
     }
-    private abstract class BasicPipe {
+    public abstract class AbstractPipe {
+
+        /**
+         * the wrapper of the pipe
+         */
+        protected Wrapper wrapper = null;
 
         /**
          * the class of the pipe
          */
         protected Class clazz = null;
+
+        protected String uniqueID = UUID.randomUUID().toString();
 
         /**
          * Returns this pipe's class.
@@ -225,13 +224,13 @@ public final class Schematic {
             return this.clazz;
         }
 
-    }
-    private abstract class AbstractPipe extends BasicPipe {
-
         /**
-         * the wrapper of the pipe
+         * Returns this pipe's unique identifier.
+         * @return the unique ID.
          */
-        protected Wrapper wrapper = null;
+        public String getUniqueID() {
+            return this.uniqueID;
+        }
 
         /**
          * Wraps the pipe with a wrapper

@@ -6,7 +6,7 @@ import com.scangarella.pipe.transmission.ErrorMessage;
 /**
  * A utility side-effect-pipe to log a string to the console.
  */
-public class LogStringPipe extends Pipe<String, String> {
+public class LogIfFrienlyPipe extends Pipe<String, String> {
 
     /**
      * Logs the parameter to the console.
@@ -15,11 +15,11 @@ public class LogStringPipe extends Pipe<String, String> {
      */
     @Override
     public String ingest(String s) {
-        System.out.println(s);
         if (s.toUpperCase().equals(s)) {
             reportError(new ErrorMessage(Error.class, "You're yelling"));
             return null;
         } else {
+            System.out.println(s);
             return s;
         }
     }

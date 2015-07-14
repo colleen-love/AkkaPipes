@@ -1,4 +1,4 @@
-package com.scangarella.pipe.util;
+package com.scangarella.pipe.example.pipe;
 
 import com.scangarella.pipe.stereotype.Pipe;
 

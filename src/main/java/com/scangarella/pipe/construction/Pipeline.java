@@ -3,7 +3,9 @@ package com.scangarella.pipe.construction;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
+import com.scangarella.pipe.transmission.ErrorMessage;
 import com.scangarella.pipe.transmission.Message;
+import jdk.nashorn.internal.runtime.regexp.joni.exception.ErrorMessages;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,9 +17,9 @@ import java.util.Map;
  */
 public final class Pipeline extends UntypedActor {
 
-    private ActorRef end = null;
-    private Map<String, PipeRef> map = new HashMap<>();
-    private PipeRef root;
+    protected ActorRef end = null;
+    protected Map<String, PipeRef> map = new HashMap<>();
+    protected PipeRef root;
 
     /**
      * Creates a new pipeline based on the schematic.
@@ -48,14 +50,20 @@ public final class Pipeline extends UntypedActor {
         if (message instanceof Message) {
             Message receivedInfo = (Message) message;
             PipeRef p = map.get(receivedInfo.getId());
-            if (p.hasChildren()) {
-                p.getChildren().forEach(child -> {
-                    Message<Object> sentInfo = new Message<>(child.getId(), receivedInfo.getInfo());
-                    child.getActorRef().tell(sentInfo, getSelf());
-                });
-            } else {
-                if (this.end != null) {
-                    this.end.tell(receivedInfo.getInfo(), getSelf());
+            if (receivedInfo.getInfo() instanceof ErrorMessage) {
+                if (p.hasErrorHandler()) {
+                    p.getErrorHandler().tell(receivedInfo.getInfo(), getSelf());
+                }
+            }else {
+                if (p.hasChildren()) {
+                    p.getChildren().forEach(child -> {
+                        Message<Object> sentInfo = new Message<>(child.getId(), receivedInfo.getInfo());
+                        child.getActorRef().tell(sentInfo, getSelf());
+                    });
+                } else {
+                    if (this.end != null) {
+                        this.end.tell(receivedInfo.getInfo(), getSelf());
+                    }
                 }
             }
         } else {
@@ -66,6 +74,9 @@ public final class Pipeline extends UntypedActor {
 
     private PipeRef buildAndMapPipes(Schematic.Pipe pipe) {
         PipeRef pipeRef = buildPipe(pipe);
+        if (pipe.hasErrorHandler()) {
+            pipeRef.setErrorHandler(buildErrorHandler(pipe.getErrorHandler()));
+        }
         map.put(pipeRef.getId(), pipeRef);
         for(Schematic.Pipe child : pipe.getChildren()) {
             PipeRef childRef;
@@ -92,9 +103,14 @@ public final class Pipeline extends UntypedActor {
         return new PipeRef(pipe.getUniqueID(), actorRef);
     }
 
+    private ActorRef buildErrorHandler(Schematic.ErrorHandler errorHandler) {
+        return getContext().actorOf(Props.create(errorHandler.getClazz()));
+    }
+
     private class PipeRef {
         private String id;
         private ActorRef actorRef;
+        private ActorRef errorRef = null;
         private List<PipeRef> childrenRefs = new ArrayList<>();
         public PipeRef(String id, ActorRef ref) {
             this.id = id;
@@ -114,6 +130,15 @@ public final class Pipeline extends UntypedActor {
         }
         public String getId(){
             return this.id;
+        }
+        public void setErrorHandler(ActorRef errorRef) {
+            this.errorRef = errorRef;
+        }
+        public ActorRef getErrorHandler() {
+            return this.errorRef;
+        }
+        public Boolean hasErrorHandler() {
+            return this.errorRef != null;
         }
     }
 }

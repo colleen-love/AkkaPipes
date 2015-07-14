@@ -1,8 +1,9 @@
 package com.scangarella.pipe.stereotype;
 
 import akka.actor.UntypedActor;
+import com.scangarella.pipe.error.IncompatibleTypeException;
+import com.scangarella.pipe.transmission.ErrorMessage;
 import com.scangarella.pipe.transmission.Message;
-import com.sun.corba.se.impl.io.TypeMismatchException;
 
 /**
  * This represents an abstract pipe from which all pipe classes (except the wrapperpipe)
@@ -31,7 +32,7 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
             if (additionalLogic(inbound, outbound)) {
                 send(outbound);
             } else {
-                throw new TypeMismatchException("Pipe doesn't conform to stereotype.");
+                throw new IncompatibleTypeException("Pipe doesn't conform to stereotype.");
             }
         }
     }
@@ -65,5 +66,9 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
      */
     protected Boolean additionalLogic(I inbound, O outbound) {
         return true;
+    }
+
+    protected void reportError(ErrorMessage errorMessage) {
+        this.getSender().tell(new Message<ErrorMessage>(this.getId(), errorMessage), this.getSelf());
     }
 }

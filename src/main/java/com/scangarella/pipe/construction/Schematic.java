@@ -1,8 +1,11 @@
 package com.scangarella.pipe.construction;
 
+import akka.actor.Actor;
+import akka.actor.UntypedActor;
+import com.scangarella.pipe.error.IncompatibleTypeException;
 import com.scangarella.pipe.stereotype.FilterPipe;
 import com.scangarella.pipe.stereotype.SideEffectPipe;
-import com.sun.corba.se.impl.io.TypeMismatchException;
+import com.scangarella.pipe.stereotype.WrapperPipe;
 
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
@@ -18,6 +21,8 @@ import java.util.UUID;
 public final class Schematic {
 
     private Pipe root;
+    private ErrorHandler globalErrorHandler;
+    private Wrapper globalWrapper;
 
     /**
      * Creates a new schematic with the first pipe representation.
@@ -43,6 +48,18 @@ public final class Schematic {
         return find(this.root, new ArrayList<>());
     }
 
+    public ErrorHandler setGlobalErrorHandler(Class clazz) {
+        this.globalErrorHandler = new ErrorHandler(clazz);
+        allPipes().forEach(pipe -> pipe.setErrorHandler(this.globalErrorHandler));
+        return this.globalErrorHandler;
+    }
+
+    public Wrapper setGlobalWrapper(Class clazz) {
+        this.globalWrapper = new Wrapper(clazz);
+        allPipes().forEach(pipe -> pipe.wrap(this.globalWrapper));
+        return this.globalWrapper;
+    }
+
     private List<Pipe> find(Pipe pipe, List<Pipe> pipes) {
         pipes.add(pipe);
         for (Pipe child : pipe.getChildren()) {
@@ -60,18 +77,25 @@ public final class Schematic {
 
         private List<Pipe> children = new ArrayList<>();
         private String uniqueID = UUID.randomUUID().toString();
+        private ErrorHandler errorHandler;
 
         /**
          * Creates a new pipe representation.
          * @param clazz The class of the pipe to represent.
-         * @throws TypeMismatchException A class not of type pipe is created or the parent's
+         * @throws IncompatibleTypeException A class not of type pipe is created or the parent's
          * 'out' type doesn't match this pipe's 'in' type.
          */
-        public Pipe(Class clazz) throws TypeMismatchException {
+        public Pipe(Class clazz) throws IncompatibleTypeException {
             if (com.scangarella.pipe.stereotype.Pipe.class.isAssignableFrom(clazz)) {
                 this.clazz = clazz;
+                if(globalErrorHandler != null) {
+                    this.setErrorHandler(globalErrorHandler);
+                }
+                if(globalWrapper != null) {
+                    this.wrap(globalWrapper);
+                }
             } else {
-                throw new TypeMismatchException();
+                throw new IncompatibleTypeException();
             }
         }
 
@@ -87,22 +111,19 @@ public final class Schematic {
          * Adds a child to the pipe's children.
          * @param clazz The class of the child to be added.
          * @return The representation of the pipe's child.
-         * @throws TypeMismatchException the parent's 'out' type doesn't match this pipe's 'in' type.
+         * @throws IncompatibleTypeException the parent's 'out' type doesn't match this pipe's 'in' type.
          */
-        public Pipe addChild(Class clazz) throws TypeMismatchException {
-            Pipe child = new Pipe(clazz);
-            checkClassCompatibility(this, child);
-            this.children.add(child);
-            return child;
+        public Pipe addChild(Class clazz) throws IncompatibleTypeException {
+            return addChild(new Pipe(clazz));
         }
 
         /**
          * Adds a child to the pipe's children.
          * @param child the preexisting Pipe to add as a child.
          * @return The representation of the pipe's child.
-         * @throws TypeMismatchException the parent's 'out' type doesn't match this pipe's 'in' type.
+         * @throws IncompatibleTypeException the parent's 'out' type doesn't match this pipe's 'in' type.
          */
-        public Pipe addChild(Pipe child) throws TypeMismatchException {
+        public Pipe addChild(Pipe child) throws IncompatibleTypeException {
             checkClassCompatibility(this, child);
             this.children.add(child);
             return child;
@@ -124,11 +145,31 @@ public final class Schematic {
             return !this.children.isEmpty();
         }
 
+        public ErrorHandler setErrorHandler(Class clazz) {
+            return setErrorHandler(new ErrorHandler(clazz));
+        }
+
+        public ErrorHandler setErrorHandler(ErrorHandler errorHandler) {
+            if (!Actor.class.isAssignableFrom(errorHandler.getClazz())) {
+                throw new UnsupportedOperationException();
+            }
+            this.errorHandler = errorHandler;
+            return this.errorHandler;
+        }
+
+        public ErrorHandler getErrorHandler() {
+            return this.errorHandler;
+        }
+
+        public Boolean hasErrorHandler() {
+            return this.errorHandler != null;
+        }
+
         @SuppressWarnings("unchecked")
-        private void checkClassCompatibility(Pipe parent, Pipe child) throws TypeMismatchException {
+        private void checkClassCompatibility(Pipe parent, Pipe child) throws IncompatibleTypeException {
             if (parent != null && child != null) {
                 if(!child.getInType().isAssignableFrom(parent.getOutType())) {
-                    throw new TypeMismatchException();
+                    throw new IncompatibleTypeException();
                 }
             }
         }
@@ -164,17 +205,17 @@ public final class Schematic {
             this.clazz = clazz;
         }
     }
-    private abstract class AbstractPipe {
+    public class ErrorHandler extends BasicPipe {
+        public ErrorHandler(Class clazz) {
+            this.clazz = clazz;
+        }
+    }
+    private abstract class BasicPipe {
 
         /**
          * the class of the pipe
          */
         protected Class clazz = null;
-
-        /**
-         * the wrapper of the pipe
-         */
-        protected Wrapper wrapper = null;
 
         /**
          * Returns this pipe's class.
@@ -184,17 +225,30 @@ public final class Schematic {
             return this.clazz;
         }
 
+    }
+    private abstract class AbstractPipe extends BasicPipe {
+
+        /**
+         * the wrapper of the pipe
+         */
+        protected Wrapper wrapper = null;
+
         /**
          * Wraps the pipe with a wrapper
          * @param clazz the class of the wrapper
          * @return The wrapper's object.
          * @throws UnsupportedOperationException If the pipe already has a wrapper.
          */
-        public Wrapper wrap(Class clazz) throws UnsupportedOperationException {
-            if (this.hasWrapper()) {
-                throw new UnsupportedOperationException();
+        public Wrapper wrap(Class clazz) throws IncompatibleTypeException {
+            if (!WrapperPipe.class.isAssignableFrom(clazz)) {
+                throw new IncompatibleTypeException();
             }
             this.wrapper = new Wrapper(clazz);
+            return this.wrapper;
+        }
+
+        public Wrapper wrap(Wrapper wrapper) {
+            this.wrapper = wrapper;
             return this.wrapper;
         }
 
@@ -229,5 +283,6 @@ public final class Schematic {
             }
             return wrappers;
         }
+
     }
 }

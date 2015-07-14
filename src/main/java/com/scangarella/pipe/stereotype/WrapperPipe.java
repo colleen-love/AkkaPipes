@@ -3,7 +3,7 @@ package com.scangarella.pipe.stereotype;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import com.sun.corba.se.impl.io.TypeMismatchException;
+import com.scangarella.pipe.error.IncompatibleTypeException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ public abstract class WrapperPipe extends UntypedActor {
     public WrapperPipe(List<Class> innerPipes) {
         innerPipes.forEach(clazz -> {
             if (!AbstractPipe.class.isAssignableFrom(clazz)) {
-                throw new TypeMismatchException();
+                throw new IncompatibleTypeException();
             }
         });
         this.innerPipes = innerPipes;

@@ -26,8 +26,11 @@ public final class PipeBuilder {
      * @param schematic The Schematic used to construct the pipeline.
      * @return The pipeopening used to access this pipeline.
      */
-    public PipeOpening build(Schematic schematic) {
-        return new PipeOpening(system.actorOf(Props.create(Pipeline.class, schematic)));
+    public PipeOpening build(Schematic schematic, Class pipeline) {
+        if(!Pipeline.class.isAssignableFrom(pipeline)) {
+            throw new UnsupportedOperationException();
+        }
+        return new PipeOpening(system.actorOf(Props.create(pipeline, schematic)));
     }
 
     /**

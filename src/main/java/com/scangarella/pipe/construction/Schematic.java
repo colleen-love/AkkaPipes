@@ -85,7 +85,7 @@ public final class Schematic {
          * 'out' type doesn't match this pipe's 'in' type.
          */
         public Pipe(Class clazz) throws IncompatibleTypeException {
-            if (com.scangarella.pipe.stereotype.Pipe.class.isAssignableFrom(clazz)) {
+            if (AbstractPipe.class.isAssignableFrom(clazz)) {
                 this.clazz = clazz;
                 if(globalErrorHandler != null) {
                     this.setErrorHandler(globalErrorHandler);
@@ -141,7 +141,7 @@ public final class Schematic {
         }
 
         public ErrorHandler setErrorHandler(ErrorHandler errorHandler) {
-            if (!Actor.class.isAssignableFrom(errorHandler.getClazz())) {
+            if (!ErrorHandler.class.isAssignableFrom(errorHandler.getClazz())) {
                 throw new UnsupportedOperationException();
             }
             this.errorHandler = errorHandler;
@@ -151,6 +151,8 @@ public final class Schematic {
         public ErrorHandler getErrorHandler() {
             return this.errorHandler;
         }
+
+        public void clearErrorHandler() { this.errorHandler = null; }
 
         public Boolean hasErrorHandler() {
             return this.errorHandler != null;
@@ -266,6 +268,8 @@ public final class Schematic {
         public Wrapper getWrapper() {
             return this.wrapper;
         }
+
+        public void clearWrapper() { this.wrapper = null; }
 
         /**
          * Gets all wrappers, including the wrappers of this pipe's wrapper, etc.

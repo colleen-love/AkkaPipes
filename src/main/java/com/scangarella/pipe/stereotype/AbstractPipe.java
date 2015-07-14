@@ -34,11 +34,7 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
             } else {
                 I inbound = (I) message;
                 O outbound = ingest(inbound);
-                if (additionalLogic(inbound, outbound)) {
-                    send(outbound);
-                } else {
-                    throw new IncompatibleTypeException("Pipe doesn't conform to stereotype.");
-                }
+                send(outbound);
             }
         }
     }
@@ -59,16 +55,6 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
      * @param outbound The data to be sent downstream.
      */
     protected abstract void send(O outbound);
-
-    /**
-     * Additional logic to ensure that the pipe is behaving correctly.
-     * @param inbound The object received.
-     * @param outbound The object to send.
-     * @return Whether or not the pipe conforms to it's stereotype.
-     */
-    protected Boolean additionalLogic(I inbound, O outbound) {
-        return true;
-    }
 
     protected void reportError(ErrorMessage errorMessage) {
         this.exceptionHandler.tell(errorMessage, this.getSelf());

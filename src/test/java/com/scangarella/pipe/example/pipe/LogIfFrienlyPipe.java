@@ -16,7 +16,7 @@ public class LogIfFrienlyPipe extends Pipe<String, String> {
     @Override
     public String ingest(String s) {
         if (s.toUpperCase().equals(s)) {
-            reportError(new ErrorMessage(Error.class, "You're yelling"));
+            reportError(new ErrorMessage(Error.class, "You're yelling!"));
             return null;
         } else {
             System.out.println(s);

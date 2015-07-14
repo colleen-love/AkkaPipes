@@ -1,13 +1,12 @@
 package com.scangarella.pipe.example.error;
 
-import akka.actor.UntypedActor;
+import com.scangarella.pipe.stereotype.ErrorHandler;
 import com.scangarella.pipe.transmission.ErrorMessage;
 
-public class SimpleErrorHandler extends UntypedActor {
+public class SimpleErrorHandler extends ErrorHandler {
 
     @Override
-    public void onReceive(Object message) {
-        ErrorMessage em = (ErrorMessage) message;
-        System.out.println(em.getErrorType() + ": " + em.getMessage());
+    public void onError(ErrorMessage message) {
+        System.out.println(message.getErrorType() + ": " + message.getMessage());
     }
 }

@@ -1,12 +1,12 @@
 package com.scangarella.pipe.example.pipe;
 
-import com.scangarella.pipe.stereotype.Pipe;
+import com.scangarella.pipe.stereotype.SideEffectPipe;
 import com.scangarella.pipe.transmission.ErrorMessage;
 
 /**
  * A utility side-effect-pipe to log a string to the console.
  */
-public class LogIfFrienlyPipe extends Pipe<String, String> {
+public class LogIfFriendlyPipe extends SideEffectPipe<String> {
 
     /**
      * Logs the parameter to the console.

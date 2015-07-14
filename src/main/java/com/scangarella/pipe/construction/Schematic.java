@@ -1,7 +1,5 @@
 package com.scangarella.pipe.construction;
 
-import akka.actor.Actor;
-import akka.actor.UntypedActor;
 import com.scangarella.pipe.error.IncompatibleTypeException;
 import com.scangarella.pipe.stereotype.FilterPipe;
 import com.scangarella.pipe.stereotype.SideEffectPipe;
@@ -85,7 +83,7 @@ public final class Schematic {
          * 'out' type doesn't match this pipe's 'in' type.
          */
         public Pipe(Class clazz) throws IncompatibleTypeException {
-            if (AbstractPipe.class.isAssignableFrom(clazz)) {
+            if (com.scangarella.pipe.stereotype.AbstractPipe.class.isAssignableFrom(clazz)) {
                 this.clazz = clazz;
                 if(globalErrorHandler != null) {
                     this.setErrorHandler(globalErrorHandler);
@@ -141,7 +139,7 @@ public final class Schematic {
         }
 
         public ErrorHandler setErrorHandler(ErrorHandler errorHandler) {
-            if (!ErrorHandler.class.isAssignableFrom(errorHandler.getClazz())) {
+            if (!com.scangarella.pipe.stereotype.ErrorHandler.class.isAssignableFrom(errorHandler.getClazz())) {
                 throw new UnsupportedOperationException();
             }
             this.errorHandler = errorHandler;

@@ -9,27 +9,27 @@ import com.scangarella.pipe.construction.Schematic;
 import com.scangarella.pipe.example.pipe.*;
 import com.scangarella.pipe.example.error.SimpleErrorHandler;
 
-/**
- * A simple example to show schematic configuration.
- *
- *               errorHandler1              errorWrapper[errorHandler2]
- *                    ^                                       ^
- *   opening -> logIfFriendly1 -> wrapper[uppercase] -> logIfFriendly2
- *                            \-> ------- lowercase -->/
- */
 public class Example {
     public static void main(String[] args) {
         ReadMeExample();
         MultiPipeExample();
         ConfigurationExample();
     }
+    /**
+     * A simple example to show schematic configuration.
+     *
+     *               errorHandler1              errorWrapper[errorHandler2]
+     *                    ^                                       ^
+     *   opening -> logIfFriendly1 -> wrapper[uppercase] -> logIfFriendly2
+     *                            \-> ------- lowercase -->/
+     */
     private static void ReadMeExample() {
-        Schematic schematic = new Schematic(LogIfFrienlyPipe.class);
+        Schematic schematic = new Schematic(LogIfFriendlyPipe.class);
         Schematic.Pipe logIfFriendly1 = schematic.getRoot();
         Schematic.Pipe uppercase = logIfFriendly1.addChild(UppercasePipe.class);
         Schematic.Wrapper wrapper = uppercase.wrap(LoadBalancingPipeWrapper.class);
         Schematic.Pipe lowercase = logIfFriendly1.addChild(LowercasePipe.class);
-        Schematic.Pipe logIfFriendly2 = uppercase.addChild(LogIfFrienlyPipe.class);
+        Schematic.Pipe logIfFriendly2 = uppercase.addChild(LogIfFriendlyPipe.class);
         lowercase.addChild(logIfFriendly2);
         Schematic.ErrorHandler errorHandler1 = logIfFriendly1.setErrorHandler(SimpleErrorHandler.class);
         Schematic.ErrorHandler errorHandler2 = logIfFriendly2.setErrorHandler(SimpleErrorHandler.class);
@@ -44,6 +44,10 @@ public class Example {
         }
         PipeSystem.CloseSystem();
     }
+
+    /**
+     *   opening -> LogStringPipe -> SplitSentencePipe -> LogStringPipe
+     */
     private static void MultiPipeExample() {
         Schematic schematic = new Schematic(LogStringPipe.class);
         schematic.getRoot()
@@ -59,6 +63,11 @@ public class Example {
         }
         PipeSystem.CloseSystem();
     }
+
+    /**
+     *   opening -> LogStringPipe -> LowercasePipe -> LogStringPipe -> LowercasePipe -> LogIfFriendlyPipe
+     *                           \-> UppercasePipe ->/
+     */
     private static void ConfigurationExample() {
         Schematic schematic = new Schematic(LogStringPipe.class);
         Schematic.Pipe root = schematic.getRoot();
@@ -67,7 +76,7 @@ public class Example {
         Schematic.Pipe log = lowercase.addChild(LogStringPipe.class);
         uppercase.addChild(log);
         log.addChild(LowercasePipe.class)
-                .addChild(LogIfFrienlyPipe.class);
+                .addChild(LogIfFriendlyPipe.class);
         log.wrap(LoadBalancingPipeWrapper.class);
         log.setErrorHandler(SimpleErrorHandler.class);
         log.clearErrorHandler();

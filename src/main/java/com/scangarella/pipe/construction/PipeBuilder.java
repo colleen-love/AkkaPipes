@@ -1,11 +1,9 @@
 package com.scangarella.pipe.construction;
 
-import akka.actor.Actor;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import com.scangarella.pipe.transmission.InitializationMessage;
-import com.scangarella.pipe.transmission.WrapperInitializationMessage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,7 +17,7 @@ import java.util.Map;
 public final class PipeBuilder {
 
     private ActorSystem system;
-    protected Map<String, PipeRef> map = new HashMap<>();
+    private Map<String, PipeRef> map = new HashMap<>();
 
     /**
      * Creates a new PipeBuilder object within this Akka ActorSystem.
@@ -56,7 +54,7 @@ public final class PipeBuilder {
         if (pipe.hasErrorHandler()) {
             PipeRef errorHandler = buildPipe(pipe.getErrorHandler());
             if(errorHandler.isWrapper()) {
-                errorHandler.getActorRef().tell(new WrapperInitializationMessage(errorHandler.getInnerClasses()), null);
+                errorHandler.getActorRef().tell(new InitializationMessage(errorHandler.getInnerClasses()), null);
             }
             pipeRef.setErrorHandler(errorHandler.getActorRef());
         }
@@ -77,7 +75,7 @@ public final class PipeBuilder {
             }
         }
         if(pipeRef.isWrapper()) {
-            pipeRef.getActorRef().tell(new WrapperInitializationMessage(
+            pipeRef.getActorRef().tell(new InitializationMessage(
                     pipeRef.getInnerClasses(), pipeRef.getChildren(), pipeRef.getErrorHandler()), null);
         } else {
             pipeRef.getActorRef().tell(new InitializationMessage(

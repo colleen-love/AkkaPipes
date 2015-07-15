@@ -17,6 +17,10 @@ public class LoadBalancingPipeWrapper extends WrapperPipe {
     private Class routingLogic = SmallestMailboxRoutingLogic.class;
     private Integer numberOfRoutees = 4;
     private Router router;
+
+    /**
+     * Creates the router and it's routees.
+     */
     @Override
     @SuppressWarnings("unchecked")
     public void initSystem() {

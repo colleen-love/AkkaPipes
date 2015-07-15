@@ -16,6 +16,9 @@ import java.util.List;
  */
 public abstract class AbstractPipe<I, O> extends UntypedActor {
 
+    /**
+     * The downstream pipes of this pipe
+     */
     protected List<ActorRef> downstreamPipes;
     private ActorRef exceptionHandler;
     /**
@@ -58,6 +61,10 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
      */
     protected abstract void send(O outbound);
 
+    /**
+     * Reports an error to this pipe's error handler, if it exists.
+     * @param errorMessage The error message to send to the error handler.
+     */
     protected void reportError(ErrorMessage errorMessage) {
         if (this.exceptionHandler != null) {
             this.exceptionHandler.tell(errorMessage, this.getSelf());

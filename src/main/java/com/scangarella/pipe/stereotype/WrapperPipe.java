@@ -3,9 +3,7 @@ package com.scangarella.pipe.stereotype;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import com.scangarella.pipe.error.IncompatibleTypeException;
 import com.scangarella.pipe.transmission.InitializationMessage;
-import com.scangarella.pipe.transmission.WrapperInitializationMessage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,13 +31,11 @@ public abstract class WrapperPipe extends UntypedActor {
             List<Class> innerInnerPipes = new ArrayList<>(this.innerPipes);
             innerInnerPipes.remove(innerInnerPipes.size() - 1);
             ref = getContext().actorOf(Props.create(innerPipe));
-            ref.tell(new WrapperInitializationMessage(innerInnerPipes, downstream, exception), this.getSelf());
+            ref.tell(new InitializationMessage(innerInnerPipes, downstream, exception), this.getSelf());
         } else {
             ref = getContext().actorOf(Props.create(innerPipe));
             InitializationMessage init = new InitializationMessage(downstream, exception);
-            if (!init.isBlank()) {
-                ref.tell(init, this.getSelf());
-            }
+            ref.tell(init, this.getSelf());
         }
         return ref;
     }
@@ -52,15 +48,15 @@ public abstract class WrapperPipe extends UntypedActor {
     @SuppressWarnings("unchecked")
     public final void onReceive(Object message) {
         if (message != null) {
-            if (message instanceof WrapperInitializationMessage) {
-                initializePipe((WrapperInitializationMessage) message);
+            if (message instanceof InitializationMessage) {
+                initializePipe((InitializationMessage) message);
             } else {
                 ingest(message);
             }
         }
     }
 
-    private void initializePipe(WrapperInitializationMessage message) {
+    private void initializePipe(InitializationMessage message) {
         this.innerPipes = message.getInner();
         this.downstream = message.getDownstream();
         this.exception = message.getException();
@@ -73,6 +69,9 @@ public abstract class WrapperPipe extends UntypedActor {
      */
     public abstract void ingest(Object message);
 
+    /**
+     * Initializes the system after the pipe's inner pipes have been set.
+     */
     protected void initSystem() { }
 
 }

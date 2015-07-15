@@ -19,8 +19,8 @@ import java.util.UUID;
 public final class Schematic {
 
     private Pipe root;
-    private ErrorHandler globalErrorHandler;
-    private Wrapper globalWrapper;
+    private Class globalErrorHandler;
+    private Class globalWrapper;
 
     /**
      * Creates a new schematic with the first pipe representation.
@@ -46,16 +46,24 @@ public final class Schematic {
         return find(this.root, new ArrayList<>());
     }
 
-    public ErrorHandler setGlobalErrorHandler(Class clazz) {
-        this.globalErrorHandler = new ErrorHandler(clazz);
+    /**
+     * Sets the error handler for every pipe in the schematic.
+     * Any pipes added to the schematic will have this error handler automatically.
+     * @param clazz The class of the error handler.
+     */
+    public void setGlobalErrorHandler(Class clazz) {
+        this.globalErrorHandler = clazz;
         allPipes().forEach(pipe -> pipe.setErrorHandler(this.globalErrorHandler));
-        return this.globalErrorHandler;
     }
 
-    public Wrapper setGlobalWrapper(Class clazz) {
-        this.globalWrapper = new Wrapper(clazz);
+    /**
+     * Sets the wrapper for every pipe in the schematic.
+     * Any pipes added to the schematic will have this wrapper automatically.
+     * @param clazz The class of the wrapper.
+     */
+    public void setGlobalWrapper(Class clazz) {
+        this.globalWrapper = clazz;
         allPipes().forEach(pipe -> pipe.wrap(this.globalWrapper));
-        return this.globalWrapper;
     }
 
     private List<Pipe> find(Pipe pipe, List<Pipe> pipes) {
@@ -134,10 +142,20 @@ public final class Schematic {
             return !this.children.isEmpty();
         }
 
+        /**
+         * Sets the error handler for this pipe
+         * @param clazz The class of the error handler to set.
+         * @return The newly created error handler node in the schematic
+         */
         public ErrorHandler setErrorHandler(Class clazz) {
             return setErrorHandler(new ErrorHandler(clazz));
         }
 
+        /**
+         * Sets the error handler for this pipe
+         * @param errorHandler The error handler node to use
+         * @return The error handler node in the schematic
+         */
         public ErrorHandler setErrorHandler(ErrorHandler errorHandler) {
             if (!com.scangarella.pipe.stereotype.ErrorHandler.class.isAssignableFrom(errorHandler.getClazz())) {
                 throw new UnsupportedOperationException();
@@ -146,12 +164,23 @@ public final class Schematic {
             return this.errorHandler;
         }
 
+        /**
+         * Gets the error handler for this pipe.
+         * @return the error handler for this pipe.
+         */
         public ErrorHandler getErrorHandler() {
             return this.errorHandler;
         }
 
+        /**
+         * Removes the error handler for this pipe.
+         */
         public void clearErrorHandler() { this.errorHandler = null; }
 
+        /**
+         * Checks to see if this pipe has an error handler.
+         * @return True if the pipe has an error handler, false otherwise.
+         */
         public Boolean hasErrorHandler() {
             return this.errorHandler != null;
         }
@@ -201,6 +230,10 @@ public final class Schematic {
      * An error handler representation in the schematic.
      */
     public class ErrorHandler extends AbstractPipe {
+        /**
+         * Creates a new Error Handler
+         * @param clazz the class of the Error handler.
+         */
         public ErrorHandler(Class clazz) {
             this.clazz = clazz;
         }
@@ -256,11 +289,6 @@ public final class Schematic {
             return this.wrapper;
         }
 
-        public Wrapper wrap(Wrapper wrapper) {
-            this.wrapper = wrapper;
-            return this.wrapper;
-        }
-
         /**
          * Returns whether or not the pipe has a wrapper.
          * @return True if the pipe has a wrapper, false otherwise.
@@ -277,6 +305,9 @@ public final class Schematic {
             return this.wrapper;
         }
 
+        /**
+         * Clears the pipe's wrapper.
+         */
         public void clearWrapper() { this.wrapper = null; }
 
         /**

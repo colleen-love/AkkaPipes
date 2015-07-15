@@ -15,9 +15,11 @@ public abstract class MultiPipe<I, O> extends AbstractPipe<I, Iterable<O>> {
      */
     @Override
     protected final void send(Iterable<O> outbound) {
-        for(O o : outbound) {
-            if (o != null) {
-                this.downstreamPipes.forEach(pipe -> pipe.tell(o, this.getSelf()));
+        if (outbound != null && this.downstreamPipes != null) {
+            for (O o : outbound) {
+                if (o != null) {
+                    this.downstreamPipes.forEach(pipe -> pipe.tell(o, this.getSelf()));
+                }
             }
         }
     }

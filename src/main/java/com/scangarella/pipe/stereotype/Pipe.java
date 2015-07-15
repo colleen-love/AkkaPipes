@@ -18,7 +18,7 @@ public abstract class Pipe<I, O> extends AbstractPipe<I, O> {
      */
     @Override
     protected final void send(O outbound) {
-        if (outbound != null) {
+        if (outbound != null && this.downstreamPipes != null) {
             this.downstreamPipes.forEach(pipe -> pipe.tell(outbound, this.getSelf()));
         }
     }

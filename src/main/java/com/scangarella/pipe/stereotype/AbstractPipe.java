@@ -38,10 +38,12 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
             }
         }
     }
+
     private void initializePipe(InitializationMessage message) {
         this.downstreamPipes = message.getDownstream();
         this.exceptionHandler = message.getException();
     }
+
     /**
      * The method to be overridden by other pipes. It will take in data of type I
      * and transform it to type O.
@@ -57,6 +59,8 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
     protected abstract void send(O outbound);
 
     protected void reportError(ErrorMessage errorMessage) {
-        this.exceptionHandler.tell(errorMessage, this.getSelf());
+        if (this.exceptionHandler != null) {
+            this.exceptionHandler.tell(errorMessage, this.getSelf());
+        }
     }
 }

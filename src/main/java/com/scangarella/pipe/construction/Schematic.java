@@ -197,11 +197,18 @@ public final class Schematic {
         }
     }
 
+    /**
+     * An error handler representation in the schematic.
+     */
     public class ErrorHandler extends AbstractPipe {
         public ErrorHandler(Class clazz) {
             this.clazz = clazz;
         }
     }
+
+    /**
+     * Wrappers, error handlers, and pipes all extend from this abstract pipe.
+     */
     public abstract class AbstractPipe {
 
         /**
@@ -214,6 +221,9 @@ public final class Schematic {
          */
         protected Class clazz = null;
 
+        /**
+         * The unique id of this pipe in the schematic.
+         */
         protected String uniqueID = UUID.randomUUID().toString();
 
         /**

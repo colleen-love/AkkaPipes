@@ -1,6 +1,21 @@
 # AkkaPipes
 AkkaPipes is a framework for creating concurrent pipelines. It allows you to quickly and easily build scalable data processing flows.
 
+##Quick Start
+Include this in your maven repositories:
+
+    <repository>
+        <id>collinscangarella-maven-repo</id>
+        <url>https://raw.github.com/collinscangarella/AkkaPipes/mvn-repo/</url>
+    </repository>
+    
+And this in your dependencies:
+
+    <dependency>
+        <groupId>com.scangarella.pipe</groupId>
+        <artifactId>pipe</artifactId>
+        <version>1.0</version>
+    </dependency>
 
 ##How it works
 Pipes are very easy to make. They have two types: I and O. They also have one public method to impliment, 'ingest'. Ingest takes a single argument of type I and returns type O. Here's a simple pipe example.

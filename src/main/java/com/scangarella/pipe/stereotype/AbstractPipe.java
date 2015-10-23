@@ -1,10 +1,11 @@
 package com.scangarella.pipe.stereotype;
 
 import akka.actor.ActorRef;
+import akka.actor.PoisonPill;
 import akka.actor.UntypedActor;
-import com.scangarella.pipe.error.IncompatibleTypeException;
-import com.scangarella.pipe.transmission.ErrorMessage;
+import com.scangarella.pipe.transmission.ExceptionMessage;
 import com.scangarella.pipe.transmission.InitializationMessage;
+import com.scangarella.pipe.transmission.StopMessage;
 
 import java.util.List;
 
@@ -21,6 +22,8 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
      */
     protected List<ActorRef> downstreamPipes;
     private ActorRef exceptionHandler;
+    private Integer upstreamPipeCount;
+    private Integer receivedStopMessages = 0;
     /**
      * This message is called receipt of data of type I (from upstream pipes).
      * It ingests the message to produce an object of type O and sends it downstream.
@@ -34,7 +37,14 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
         if (message != null) {
             if(message instanceof  InitializationMessage) {
                 initializePipe((InitializationMessage)message);
-            } else {
+            } else if (message instanceof StopMessage) {
+                receivedStopMessages++;
+                if (receivedStopMessages.equals(upstreamPipeCount)) {
+                    downstreamPipes.forEach(x -> x.tell(new StopMessage(), this.getSelf()));
+                    this.getSelf().tell(PoisonPill.getInstance(), this.getSelf());
+                }
+            }
+            else{
                 I inbound = (I) message;
                 O outbound = ingest(inbound);
                 send(outbound);
@@ -45,6 +55,7 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
     private void initializePipe(InitializationMessage message) {
         this.downstreamPipes = message.getDownstream();
         this.exceptionHandler = message.getException();
+        this.upstreamPipeCount = message.getUpstreamCount();
     }
 
     /**
@@ -65,7 +76,7 @@ public abstract class AbstractPipe<I, O> extends UntypedActor {
      * Reports an error to this pipe's error handler, if it exists.
      * @param errorMessage The error message to send to the error handler.
      */
-    protected void reportError(ErrorMessage errorMessage) {
+    protected void reportError(ExceptionMessage errorMessage) {
         if (this.exceptionHandler != null) {
             this.exceptionHandler.tell(errorMessage, this.getSelf());
         }

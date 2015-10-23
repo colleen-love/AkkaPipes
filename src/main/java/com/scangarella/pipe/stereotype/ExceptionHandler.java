@@ -1,13 +1,13 @@
 package com.scangarella.pipe.stereotype;
 
 import akka.actor.UntypedActor;
-import com.scangarella.pipe.transmission.ErrorMessage;
+import com.scangarella.pipe.transmission.ExceptionMessage;
 import com.scangarella.pipe.transmission.InitializationMessage;
 
 /**
  * An error handler is used to process error messages.
  */
-public abstract class ErrorHandler extends UntypedActor{
+public abstract class ExceptionHandler extends UntypedActor{
     /**
      * Receives a message from a pipe and processes the message.
      * @param message The received message.
@@ -19,7 +19,7 @@ public abstract class ErrorHandler extends UntypedActor{
             if (message instanceof InitializationMessage) {
                 initializePipe((InitializationMessage) message);
             } else {
-                onError((ErrorMessage) message);
+                onException((ExceptionMessage) message);
             }
         }
     }
@@ -32,5 +32,5 @@ public abstract class ErrorHandler extends UntypedActor{
      * Process the received error message
      * @param message The message to process.
      */
-    public abstract void onError(ErrorMessage message);
+    public abstract void onException(ExceptionMessage message);
 }

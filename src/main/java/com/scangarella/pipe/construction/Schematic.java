@@ -1,6 +1,6 @@
 package com.scangarella.pipe.construction;
 
-import com.scangarella.pipe.error.IncompatibleTypeException;
+import com.scangarella.pipe.exception.IncompatibleTypeException;
 import com.scangarella.pipe.stereotype.FilterPipe;
 import com.scangarella.pipe.stereotype.SideEffectPipe;
 import com.scangarella.pipe.stereotype.WrapperPipe;
@@ -19,7 +19,7 @@ import java.util.UUID;
 public final class Schematic {
 
     private Pipe root;
-    private Class globalErrorHandler;
+    private Class globalExceptionHandler;
     private Class globalWrapper;
 
     /**
@@ -47,13 +47,13 @@ public final class Schematic {
     }
 
     /**
-     * Sets the error handler for every pipe in the schematic.
-     * Any pipes added to the schematic will have this error handler automatically.
-     * @param clazz The class of the error handler.
+     * Sets the exception handler for every pipe in the schematic.
+     * Any pipes added to the schematic will have this exception handler automatically.
+     * @param clazz The class of the exception handler.
      */
-    public void setGlobalErrorHandler(Class clazz) {
-        this.globalErrorHandler = clazz;
-        allPipes().forEach(pipe -> pipe.setErrorHandler(this.globalErrorHandler));
+    public void setGlobalExceptionHandler(Class clazz) {
+        this.globalExceptionHandler = clazz;
+        allPipes().forEach(pipe -> pipe.setExceptionHandler(this.globalExceptionHandler));
     }
 
     /**
@@ -81,8 +81,9 @@ public final class Schematic {
      */
     public class Pipe extends AbstractPipe {
 
+        private List<Pipe> parents = new ArrayList<>();
         private List<Pipe> children = new ArrayList<>();
-        private ErrorHandler errorHandler;
+        private ExceptionHandler exceptionHandler;
 
         /**
          * Creates a new pipe representation.
@@ -93,8 +94,8 @@ public final class Schematic {
         public Pipe(Class clazz) throws IncompatibleTypeException {
             if (com.scangarella.pipe.stereotype.AbstractPipe.class.isAssignableFrom(clazz)) {
                 this.clazz = clazz;
-                if(globalErrorHandler != null) {
-                    this.setErrorHandler(globalErrorHandler);
+                if(globalExceptionHandler != null) {
+                    this.setExceptionHandler(globalExceptionHandler);
                 }
                 if(globalWrapper != null) {
                     this.wrap(globalWrapper);
@@ -111,7 +112,9 @@ public final class Schematic {
          * @throws IncompatibleTypeException the parent's 'out' type doesn't match this pipe's 'in' type.
          */
         public Pipe addChild(Class clazz) throws IncompatibleTypeException {
-            return addChild(new Pipe(clazz));
+            Pipe p = new Pipe(clazz);
+            p.addParent(this);
+            return addChild(p);
         }
 
         /**
@@ -121,8 +124,8 @@ public final class Schematic {
          * @throws IncompatibleTypeException the parent's 'out' type doesn't match this pipe's 'in' type.
          */
         public Pipe addChild(Pipe child) throws IncompatibleTypeException {
-            checkClassCompatibility(this, child);
             this.children.add(child);
+            child.addParent(this);
             return child;
         }
 
@@ -141,75 +144,55 @@ public final class Schematic {
         public Boolean hasChildren() {
             return !this.children.isEmpty();
         }
-
+        public void addParent(Pipe pipe) {
+            this.parents.add(pipe);
+        }
+        public Integer getNumParents() {
+            return this.parents.size();
+        }
         /**
-         * Sets the error handler for this pipe
-         * @param clazz The class of the error handler to set.
-         * @return The newly created error handler node in the schematic
+         * Sets the exception handler for this pipe
+         * @param clazz The class of the exception handler to set.
+         * @return The newly created exception handler node in the schematic
          */
-        public ErrorHandler setErrorHandler(Class clazz) {
-            return setErrorHandler(new ErrorHandler(clazz));
+        public ExceptionHandler setExceptionHandler(Class clazz) {
+            return setExceptionHandler(new ExceptionHandler(clazz));
         }
 
         /**
-         * Sets the error handler for this pipe
-         * @param errorHandler The error handler node to use
-         * @return The error handler node in the schematic
+         * Sets the exception handler for this pipe
+         * @param exceptionHandler The exception handler node to use
+         * @return The exception handler node in the schematic
          */
-        public ErrorHandler setErrorHandler(ErrorHandler errorHandler) {
-            if (!com.scangarella.pipe.stereotype.ErrorHandler.class.isAssignableFrom(errorHandler.getClazz())) {
+        public ExceptionHandler setExceptionHandler(ExceptionHandler exceptionHandler) {
+            if (!com.scangarella.pipe.stereotype.ExceptionHandler.class.isAssignableFrom(exceptionHandler.getClazz())) {
                 throw new UnsupportedOperationException();
             }
-            this.errorHandler = errorHandler;
-            return this.errorHandler;
+            this.exceptionHandler = exceptionHandler;
+            return this.exceptionHandler;
         }
 
         /**
-         * Gets the error handler for this pipe.
-         * @return the error handler for this pipe.
+         * Gets the exception handler for this pipe.
+         * @return the exception handler for this pipe.
          */
-        public ErrorHandler getErrorHandler() {
-            return this.errorHandler;
+        public ExceptionHandler getExceptionHandler() {
+            return this.exceptionHandler;
         }
 
         /**
-         * Removes the error handler for this pipe.
+         * Removes the exception handler for this pipe.
          */
-        public void clearErrorHandler() { this.errorHandler = null; }
+        public void clearExceptionHandler() { this.exceptionHandler = null; }
 
         /**
-         * Checks to see if this pipe has an error handler.
-         * @return True if the pipe has an error handler, false otherwise.
+         * Checks to see if this pipe has an exception handler.
+         * @return True if the pipe has an exception handler, false otherwise.
          */
-        public Boolean hasErrorHandler() {
-            return this.errorHandler != null;
+        public Boolean hasExceptionHandler() {
+            return this.exceptionHandler != null;
         }
 
-        @SuppressWarnings("unchecked")
-        private void checkClassCompatibility(Pipe parent, Pipe child) throws IncompatibleTypeException {
-            if (parent != null && child != null) {
-                if(!child.getInType().isAssignableFrom(parent.getOutType())) {
-                    throw new IncompatibleTypeException();
-                }
-            }
-        }
-
-        private Class getInType() {
-            return (Class) ((ParameterizedType) this.clazz.getGenericSuperclass())
-                    .getActualTypeArguments()[0];
-        }
-
-        private Class getOutType() {
-            Class genericOutParameter;
-            if (FilterPipe.class.isAssignableFrom(this.clazz) || SideEffectPipe.class.isAssignableFrom(this.clazz)){
-                genericOutParameter = (Class) ((ParameterizedType) this.clazz.getGenericSuperclass())
-                        .getActualTypeArguments()[0];
-            } else {
-                genericOutParameter = (Class) ((ParameterizedType) this.clazz.getGenericSuperclass())
-                        .getActualTypeArguments()[1];
-            }
-            return genericOutParameter;
-        }
     }
 
     /**
@@ -227,20 +210,20 @@ public final class Schematic {
     }
 
     /**
-     * An error handler representation in the schematic.
+     * An exception handler representation in the schematic.
      */
-    public class ErrorHandler extends AbstractPipe {
+    public class ExceptionHandler extends AbstractPipe {
         /**
-         * Creates a new Error Handler
-         * @param clazz the class of the Error handler.
+         * Creates a new Exception Handler
+         * @param clazz the class of the Exception handler.
          */
-        public ErrorHandler(Class clazz) {
+        public ExceptionHandler(Class clazz) {
             this.clazz = clazz;
         }
     }
 
     /**
-     * Wrappers, error handlers, and pipes all extend from this abstract pipe.
+     * Wrappers, exception handlers, and pipes all extend from this abstract pipe.
      */
     public abstract class AbstractPipe {
 

@@ -1,4 +1,4 @@
-package com.scangarella.pipe.error;
+package com.scangarella.pipe.exception;
 
 /**
  * This error means that the type passed is not compatible with the object it was passed to.

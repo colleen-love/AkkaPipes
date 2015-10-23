@@ -1,7 +1,7 @@
 package com.scangarella.pipe.example.pipe;
 
 import com.scangarella.pipe.stereotype.SideEffectPipe;
-import com.scangarella.pipe.transmission.ErrorMessage;
+import com.scangarella.pipe.transmission.ExceptionMessage;
 
 /**
  * A utility side-effect-pipe to log a string to the console.
@@ -16,7 +16,7 @@ public class LogIfFriendlyPipe extends SideEffectPipe<String> {
     @Override
     public String ingest(String s) {
         if (s.toUpperCase().equals(s)) {
-            reportError(new ErrorMessage(Error.class, "You're yelling!"));
+            reportError(new ExceptionMessage(new Exception("You're yelling!")));
             return null;
         } else {
             System.out.println(s);

@@ -7,7 +7,7 @@ import com.scangarella.pipe.construction.PipeOpening;
 import com.scangarella.pipe.construction.PipeSystem;
 import com.scangarella.pipe.construction.Schematic;
 import com.scangarella.pipe.example.pipe.*;
-import com.scangarella.pipe.example.error.SimpleErrorHandler;
+import com.scangarella.pipe.example.error.SimpleExceptionHandler;
 
 public class Example {
     public static void main(String[] args) {
@@ -31,8 +31,8 @@ public class Example {
         Schematic.Pipe lowercase = logIfFriendly1.addChild(LowercasePipe.class);
         Schematic.Pipe logIfFriendly2 = uppercase.addChild(LogIfFriendlyPipe.class);
         lowercase.addChild(logIfFriendly2);
-        Schematic.ErrorHandler errorHandler1 = logIfFriendly1.setErrorHandler(SimpleErrorHandler.class);
-        Schematic.ErrorHandler errorHandler2 = logIfFriendly2.setErrorHandler(SimpleErrorHandler.class);
+        Schematic.ExceptionHandler errorHandler1 = logIfFriendly1.setExceptionHandler(SimpleExceptionHandler.class);
+        Schematic.ExceptionHandler errorHandler2 = logIfFriendly2.setExceptionHandler(SimpleExceptionHandler.class);
         Schematic.Wrapper errorWrapper = errorHandler2.wrap(SpinUpPipeWrapper.class);
         PipeBuilder builder = new PipeBuilder(PipeSystem.GetSystem());
         PipeOpening<String> opening = builder.build(schematic);
@@ -78,10 +78,10 @@ public class Example {
         log.addChild(LowercasePipe.class)
                 .addChild(LogIfFriendlyPipe.class);
         log.wrap(LoadBalancingPipeWrapper.class);
-        log.setErrorHandler(SimpleErrorHandler.class);
-        log.clearErrorHandler();
+        log.setExceptionHandler(SimpleExceptionHandler.class);
+        log.clearExceptionHandler();
         log.clearWrapper();
-        schematic.setGlobalErrorHandler(SimpleErrorHandler.class);
+        schematic.setGlobalExceptionHandler(SimpleExceptionHandler.class);
         schematic.setGlobalWrapper(LoadBalancingPipeWrapper.class);
         Schematic.Wrapper wrapper = uppercase.wrap(SpinUpPipeWrapper.class);
         wrapper.wrap(LoadBalancingPipeWrapper.class);

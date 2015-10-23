@@ -14,6 +14,7 @@ public class InitializationMessage {
     private List<ActorRef> downstream = null;
     private ActorRef exception = null;
     private List<Class> inner;
+    private Integer upstreamCount;
 
     /**
      * Creates a new InitializationMessage meant for an exception handler's wrapper.
@@ -28,9 +29,10 @@ public class InitializationMessage {
      * @param downstream The pipe's downstream pipes.
      * @param exception The exception handler for any issues.
      */
-    public InitializationMessage(List<ActorRef> downstream, ActorRef exception){
+    public InitializationMessage(List<ActorRef> downstream, Integer upstreamCount, ActorRef exception){
         this.downstream = downstream;
         this.exception = exception;
+        this.upstreamCount = upstreamCount;
     }
 
     /**
@@ -39,10 +41,11 @@ public class InitializationMessage {
      * @param downstream The innermost pipe's downstream pipes.
      * @param exception The innermost pipe's exception handler.
      */
-    public InitializationMessage(List<Class> inner, List<ActorRef> downstream, ActorRef exception) {
+    public InitializationMessage(List<Class> inner, List<ActorRef> downstream, Integer upstreamCount, ActorRef exception) {
         this.downstream = downstream;
         this.exception = exception;
         this.inner = inner;
+        this.upstreamCount = upstreamCount;
     }
 
     /**
@@ -67,5 +70,9 @@ public class InitializationMessage {
      */
     public ActorRef getException() {
         return this.exception;
+    }
+
+    public Integer getUpstreamCount() {
+        return this.upstreamCount;
     }
 }

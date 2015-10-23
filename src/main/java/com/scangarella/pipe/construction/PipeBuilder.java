@@ -51,12 +51,12 @@ public final class PipeBuilder {
     }
     private PipeRef buildAndMapPipes(Schematic.Pipe pipe, ActorRef out) {
         PipeRef pipeRef = buildPipe(pipe);
-        if (pipe.hasErrorHandler()) {
-            PipeRef errorHandler = buildPipe(pipe.getErrorHandler());
-            if(errorHandler.isWrapper()) {
-                errorHandler.getActorRef().tell(new InitializationMessage(errorHandler.getInnerClasses()), null);
+        if (pipe.hasExceptionHandler()) {
+            PipeRef exceptionHandler = buildPipe(pipe.getExceptionHandler());
+            if(exceptionHandler.isWrapper()) {
+                exceptionHandler.getActorRef().tell(new InitializationMessage(exceptionHandler.getInnerClasses()), null);
             }
-            pipeRef.setErrorHandler(errorHandler.getActorRef());
+            pipeRef.setErrorHandler(exceptionHandler.getActorRef());
         }
         map.put(pipeRef.getId(), pipeRef);
         if (pipe.hasChildren()) {
@@ -76,10 +76,17 @@ public final class PipeBuilder {
         }
         if(pipeRef.isWrapper()) {
             pipeRef.getActorRef().tell(new InitializationMessage(
-                    pipeRef.getInnerClasses(), pipeRef.getChildren(), pipeRef.getErrorHandler()), null);
+                    pipeRef.getInnerClasses(),
+                    pipeRef.getChildren(),
+                    pipe.getNumParents(),
+                    pipeRef.getErrorHandler()),
+                    null);
         } else {
             pipeRef.getActorRef().tell(new InitializationMessage(
-                    pipeRef.getChildren(), pipeRef.getErrorHandler()), null);
+                    pipeRef.getChildren(),
+                    pipe.getNumParents(),
+                    pipeRef.getErrorHandler()),
+                    null);
         }
         return pipeRef;
     }

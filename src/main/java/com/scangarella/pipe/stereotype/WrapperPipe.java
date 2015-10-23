@@ -31,10 +31,10 @@ public abstract class WrapperPipe extends UntypedActor {
             List<Class> innerInnerPipes = new ArrayList<>(this.innerPipes);
             innerInnerPipes.remove(innerInnerPipes.size() - 1);
             ref = getContext().actorOf(Props.create(innerPipe));
-            ref.tell(new InitializationMessage(innerInnerPipes, downstream, exception), this.getSelf());
+            ref.tell(new InitializationMessage(innerInnerPipes, downstream, 1, exception), this.getSelf());
         } else {
             ref = getContext().actorOf(Props.create(innerPipe));
-            InitializationMessage init = new InitializationMessage(downstream, exception);
+            InitializationMessage init = new InitializationMessage(downstream, 1, exception);
             ref.tell(init, this.getSelf());
         }
         return ref;
